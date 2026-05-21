@@ -1170,45 +1170,232 @@ export default function RequestQuotePage() {
                   </div>
 
                   {/* Cargo Items List */}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {formData.cargo_items.map((item, index) => {
-                      const isFCL = item.container_size || formData.sea_type === 'FCL';
-                      const itemLabel = isFCL
-                        ? `${item.container_qty || '?'}x ${item.container_size || 'Container'} ${item.container_weight ? `(${item.container_weight} KG)` : ''}`
-                        : `${item.package_qty || '?'}x ${item.package_type || 'Package'} - ${item.gross_weight || '?'} KG, ${item.volume_cbm || '?'} CBM`;
+                      const isFCL = formData.sea_type === 'FCL';
 
                       return (
                         <div
                           key={index}
-                          className={`flex items-center justify-between p-4 rounded-md border-2 transition-all ${
+                          className={`rounded-lg border-2 transition-all ${
                             index === 0
-                              ? 'bg-white border-blue-300 shadow-sm'
-                              : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                              ? 'bg-blue-50/50 border-blue-300'
+                              : 'bg-white border-slate-300'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                              index === 0 ? 'bg-blue-600 text-white' : 'bg-slate-300 text-slate-600'
-                            }`}>
-                              {index + 1}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-800">{itemLabel}</p>
-                              {index === 0 && (
-                                <p className="text-xs text-blue-600 font-medium mt-1">
-                                  ⬆️ Managed by form above
+                          {/* Header */}
+                          <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                index === 0 ? 'bg-blue-600 text-white' : 'bg-slate-400 text-white'
+                              }`}>
+                                {index + 1}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800">
+                                  Cargo Item #{index + 1}
                                 </p>
+                                {index === 0 && (
+                                  <p className="text-xs text-blue-600 font-medium">
+                                    ⬆️ Managed by form above
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {index > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCargoItem(index)}
+                                className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-xs rounded transition-all flex items-center gap-1"
+                              >
+                                🗑️ Remove
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Editable Form (only for index > 0) */}
+                          {index > 0 && (
+                            <div className="p-4">
+                              {isFCL ? (
+                                /* FCL Fields */
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                      Container Size *
+                                    </label>
+                                    <select
+                                      required
+                                      value={item.container_size || ''}
+                                      onChange={e => updateCargoItem(index, 'container_size', e.target.value)}
+                                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                    >
+                                      <option value="">Pilih</option>
+                                      <option value="20GP">20' GP Standard</option>
+                                      <option value="40GP">40' GP Standard</option>
+                                      <option value="40HC">40' HC High Cube</option>
+                                      <option value="20RF">20' RF Reefer</option>
+                                      <option value="40RF">40' RF Reefer</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                      Quantity *
+                                    </label>
+                                    <input
+                                      required
+                                      type="number"
+                                      min="1"
+                                      value={item.container_qty || ''}
+                                      onChange={e => updateCargoItem(index, 'container_qty', e.target.value)}
+                                      placeholder="Cth: 2"
+                                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                      Weight/Container (KG)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={item.container_weight || ''}
+                                      onChange={e => updateCargoItem(index, 'container_weight', e.target.value)}
+                                      placeholder="Cth: 20000"
+                                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                /* LCL/Air/Land Fields */
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Package Type
+                                      </label>
+                                      <select
+                                        value={item.package_type || 'Pallet'}
+                                        onChange={e => updateCargoItem(index, 'package_type', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      >
+                                        <option value="Pallet">Pallet</option>
+                                        <option value="Carton">Karton / Box</option>
+                                        <option value="Crate">Peti Kayu / Crate</option>
+                                        <option value="Drum">Drum / IBC</option>
+                                        <option value="Bag">Karung / Bag</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Quantity *
+                                      </label>
+                                      <input
+                                        required
+                                        type="number"
+                                        min="1"
+                                        value={item.package_qty || ''}
+                                        onChange={e => updateCargoItem(index, 'package_qty', e.target.value)}
+                                        placeholder="Cth: 10"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Weight (KG) *
+                                      </label>
+                                      <input
+                                        required
+                                        type="number"
+                                        step="0.01"
+                                        value={item.gross_weight || ''}
+                                        onChange={e => updateCargoItem(index, 'gross_weight', e.target.value)}
+                                        placeholder="Cth: 250"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Volume (CBM) *
+                                      </label>
+                                      <input
+                                        required
+                                        type="number"
+                                        step="0.001"
+                                        value={item.volume_cbm || ''}
+                                        onChange={e => updateCargoItem(index, 'volume_cbm', e.target.value)}
+                                        placeholder="Cth: 1.8"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Length (cm)
+                                      </label>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={item.length || ''}
+                                        onChange={e => updateCargoItem(index, 'length', e.target.value)}
+                                        placeholder="120"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Width (cm)
+                                      </label>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={item.width || ''}
+                                        onChange={e => updateCargoItem(index, 'width', e.target.value)}
+                                        placeholder="80"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Height (cm)
+                                      </label>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={item.height || ''}
+                                        onChange={e => updateCargoItem(index, 'height', e.target.value)}
+                                        placeholder="100"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                        Stackable?
+                                      </label>
+                                      <select
+                                        value={item.is_stackable ? 'YES' : 'NO'}
+                                        onChange={e => updateCargoItem(index, 'is_stackable', e.target.value === 'YES')}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
+                                      >
+                                        <option value="YES">✅ Ya</option>
+                                        <option value="NO">❌ Tidak</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                          </div>
-                          {index > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => removeCargoItem(index)}
-                              className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-xs rounded transition-all"
-                            >
-                              🗑️ Remove
-                            </button>
+                          )}
+
+                          {/* Summary for item 0 (read-only) */}
+                          {index === 0 && (
+                            <div className="p-4 bg-blue-50/30">
+                              <p className="text-sm text-slate-600">
+                                {isFCL
+                                  ? `${formData.container_qty || '?'}x ${formData.container_size || 'Container'} ${formData.container_weight ? `(${formData.container_weight} KG each)` : ''}`
+                                  : `${formData.package_qty || '?'}x ${formData.package_type || 'Package'} - ${formData.gross_weight || '?'} KG, ${formData.volume_cbm || '?'} CBM`
+                                }
+                              </p>
+                            </div>
                           )}
                         </div>
                       );

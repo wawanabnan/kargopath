@@ -328,6 +328,110 @@ export default function QuoteDetailPage() {
                   )}
                 </div>
 
+                {/* Cargo Items Table (if multiple items exist) */}
+                {requestObj.cargo_items && requestObj.cargo_items.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Detailed Cargo Items Breakdown</p>
+                    
+                    {mode === 'sea' && requestObj.sea_type === 'FCL' ? (
+                      /* FCL Table */
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100 border-b-2 border-slate-300">
+                              <th className="py-2 px-3 text-left font-bold text-slate-700">#</th>
+                              <th className="py-2 px-3 text-left font-bold text-slate-700">Container Size</th>
+                              <th className="py-2 px-3 text-center font-bold text-slate-700">Quantity</th>
+                              <th className="py-2 px-3 text-right font-bold text-slate-700">Weight/Container (KG)</th>
+                              <th className="py-2 px-3 text-right font-bold text-slate-700">Subtotal Weight (KG)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {requestObj.cargo_items.map((item, idx) => (
+                              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                                <td className="py-2 px-3 text-slate-600 font-medium">{idx + 1}</td>
+                                <td className="py-2 px-3 font-bold text-slate-800">{item.container_size || '-'}</td>
+                                <td className="py-2 px-3 text-center font-bold text-slate-800">{item.container_qty || 0}</td>
+                                <td className="py-2 px-3 text-right text-slate-700">{item.container_weight ? parseFloat(item.container_weight).toLocaleString('id-ID') : '-'}</td>
+                                <td className="py-2 px-3 text-right font-bold text-slate-800">
+                                  {item.container_weight && item.container_qty 
+                                    ? (parseFloat(item.container_weight) * parseInt(item.container_qty)).toLocaleString('id-ID')
+                                    : '-'}
+                                </td>
+                              </tr>
+                            ))}
+                            <tr className="bg-blue-50 border-t-2 border-blue-300 font-bold">
+                              <td colSpan="2" className="py-2 px-3 text-slate-800 uppercase text-[10px] tracking-wider">TOTAL</td>
+                              <td className="py-2 px-3 text-center text-blue-600 font-black">
+                                {requestObj.cargo_items.reduce((sum, item) => sum + (parseInt(item.container_qty) || 0), 0)} units
+                              </td>
+                              <td className="py-2 px-3"></td>
+                              <td className="py-2 px-3 text-right text-blue-600 font-black">
+                                {requestObj.cargo_items.reduce((sum, item) => 
+                                  sum + ((parseFloat(item.container_weight) || 0) * (parseInt(item.container_qty) || 0)), 0
+                                ).toLocaleString('id-ID')} KG
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      /* LCL/Air/Land Table */
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100 border-b-2 border-slate-300">
+                              <th className="py-2 px-3 text-left font-bold text-slate-700">#</th>
+                              <th className="py-2 px-3 text-left font-bold text-slate-700">Package Type</th>
+                              <th className="py-2 px-3 text-center font-bold text-slate-700">Qty</th>
+                              <th className="py-2 px-3 text-right font-bold text-slate-700">Weight (KG)</th>
+                              <th className="py-2 px-3 text-right font-bold text-slate-700">Volume (CBM)</th>
+                              <th className="py-2 px-3 text-center font-bold text-slate-700">Dimensions (cm)</th>
+                              <th className="py-2 px-3 text-center font-bold text-slate-700">Stackable</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {requestObj.cargo_items.map((item, idx) => (
+                              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                                <td className="py-2 px-3 text-slate-600 font-medium">{idx + 1}</td>
+                                <td className="py-2 px-3 font-bold text-slate-800">{item.package_type || '-'}</td>
+                                <td className="py-2 px-3 text-center font-bold text-slate-800">{item.package_qty || 0}</td>
+                                <td className="py-2 px-3 text-right text-slate-700">
+                                  {item.gross_weight ? parseFloat(item.gross_weight).toLocaleString('id-ID') : '-'}
+                                </td>
+                                <td className="py-2 px-3 text-right text-slate-700">
+                                  {item.volume_cbm ? parseFloat(item.volume_cbm).toFixed(3) : '-'}
+                                </td>
+                                <td className="py-2 px-3 text-center text-slate-600 text-[10px]">
+                                  {item.length && item.width && item.height 
+                                    ? `${item.length}×${item.width}×${item.height}`
+                                    : '-'}
+                                </td>
+                                <td className="py-2 px-3 text-center">
+                                  {item.is_stackable ? '✅' : '❌'}
+                                </td>
+                              </tr>
+                            ))}
+                            <tr className="bg-blue-50 border-t-2 border-blue-300 font-bold">
+                              <td colSpan="2" className="py-2 px-3 text-slate-800 uppercase text-[10px] tracking-wider">TOTAL</td>
+                              <td className="py-2 px-3 text-center text-blue-600 font-black">
+                                {requestObj.cargo_items.reduce((sum, item) => sum + (parseInt(item.package_qty) || 0), 0)} units
+                              </td>
+                              <td className="py-2 px-3 text-right text-blue-600 font-black">
+                                {requestObj.cargo_items.reduce((sum, item) => sum + (parseFloat(item.gross_weight) || 0), 0).toLocaleString('id-ID')} KG
+                              </td>
+                              <td className="py-2 px-3 text-right text-blue-600 font-black">
+                                {requestObj.cargo_items.reduce((sum, item) => sum + (parseFloat(item.volume_cbm) || 0), 0).toFixed(3)} CBM
+                              </td>
+                              <td colSpan="2" className="py-2 px-3"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {requestObj.special_instructions && (
                   <div className="mt-6 pt-4 border-t border-slate-100">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Special Instructions</p>
@@ -570,6 +674,108 @@ export default function QuoteDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Cargo Items Breakdown (Print) */}
+          {requestObj.cargo_items && requestObj.cargo_items.length > 0 && (
+            <div className="mb-6">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Cargo Items Breakdown</p>
+              
+              {mode === 'sea' && requestObj.sea_type === 'FCL' ? (
+                /* FCL Table */
+                <table className="w-full text-[9px] border-collapse border border-slate-300">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      <th className="py-1 px-2 text-left font-bold border border-slate-300">#</th>
+                      <th className="py-1 px-2 text-left font-bold border border-slate-300">Container Size</th>
+                      <th className="py-1 px-2 text-center font-bold border border-slate-300">Quantity</th>
+                      <th className="py-1 px-2 text-right font-bold border border-slate-300">Weight/Container (KG)</th>
+                      <th className="py-1 px-2 text-right font-bold border border-slate-300">Subtotal Weight (KG)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requestObj.cargo_items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="py-1 px-2 border border-slate-300">{idx + 1}</td>
+                        <td className="py-1 px-2 font-bold border border-slate-300">{item.container_size || '-'}</td>
+                        <td className="py-1 px-2 text-center font-bold border border-slate-300">{item.container_qty || 0}</td>
+                        <td className="py-1 px-2 text-right border border-slate-300">
+                          {item.container_weight ? parseFloat(item.container_weight).toLocaleString('id-ID') : '-'}
+                        </td>
+                        <td className="py-1 px-2 text-right font-bold border border-slate-300">
+                          {item.container_weight && item.container_qty 
+                            ? (parseFloat(item.container_weight) * parseInt(item.container_qty)).toLocaleString('id-ID')
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-100 font-bold">
+                      <td colSpan="2" className="py-1 px-2 border border-slate-300 uppercase text-[8px]">TOTAL</td>
+                      <td className="py-1 px-2 text-center border border-slate-300">
+                        {requestObj.cargo_items.reduce((sum, item) => sum + (parseInt(item.container_qty) || 0), 0)} units
+                      </td>
+                      <td className="py-1 px-2 border border-slate-300"></td>
+                      <td className="py-1 px-2 text-right border border-slate-300">
+                        {requestObj.cargo_items.reduce((sum, item) => 
+                          sum + ((parseFloat(item.container_weight) || 0) * (parseInt(item.container_qty) || 0)), 0
+                        ).toLocaleString('id-ID')} KG
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                /* LCL/Air/Land Table */
+                <table className="w-full text-[9px] border-collapse border border-slate-300">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      <th className="py-1 px-2 text-left font-bold border border-slate-300">#</th>
+                      <th className="py-1 px-2 text-left font-bold border border-slate-300">Package Type</th>
+                      <th className="py-1 px-2 text-center font-bold border border-slate-300">Qty</th>
+                      <th className="py-1 px-2 text-right font-bold border border-slate-300">Weight (KG)</th>
+                      <th className="py-1 px-2 text-right font-bold border border-slate-300">Volume (CBM)</th>
+                      <th className="py-1 px-2 text-center font-bold border border-slate-300">Dimensions (cm)</th>
+                      <th className="py-1 px-2 text-center font-bold border border-slate-300">Stack</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requestObj.cargo_items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="py-1 px-2 border border-slate-300">{idx + 1}</td>
+                        <td className="py-1 px-2 font-bold border border-slate-300">{item.package_type || '-'}</td>
+                        <td className="py-1 px-2 text-center font-bold border border-slate-300">{item.package_qty || 0}</td>
+                        <td className="py-1 px-2 text-right border border-slate-300">
+                          {item.gross_weight ? parseFloat(item.gross_weight).toLocaleString('id-ID') : '-'}
+                        </td>
+                        <td className="py-1 px-2 text-right border border-slate-300">
+                          {item.volume_cbm ? parseFloat(item.volume_cbm).toFixed(3) : '-'}
+                        </td>
+                        <td className="py-1 px-2 text-center border border-slate-300 text-[8px]">
+                          {item.length && item.width && item.height 
+                            ? `${item.length}×${item.width}×${item.height}`
+                            : '-'}
+                        </td>
+                        <td className="py-1 px-2 text-center border border-slate-300">
+                          {item.is_stackable ? 'Yes' : 'No'}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-100 font-bold">
+                      <td colSpan="2" className="py-1 px-2 border border-slate-300 uppercase text-[8px]">TOTAL</td>
+                      <td className="py-1 px-2 text-center border border-slate-300">
+                        {requestObj.cargo_items.reduce((sum, item) => sum + (parseInt(item.package_qty) || 0), 0)} units
+                      </td>
+                      <td className="py-1 px-2 text-right border border-slate-300">
+                        {requestObj.cargo_items.reduce((sum, item) => sum + (parseFloat(item.gross_weight) || 0), 0).toLocaleString('id-ID')} KG
+                      </td>
+                      <td className="py-1 px-2 text-right border border-slate-300">
+                        {requestObj.cargo_items.reduce((sum, item) => sum + (parseFloat(item.volume_cbm) || 0), 0).toFixed(3)} CBM
+                      </td>
+                      <td colSpan="2" className="py-1 px-2 border border-slate-300"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
 
           {/* Charges Breakdown */}
           <div className="mb-6">

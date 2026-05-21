@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import QuotationRequest, Quotation, QuotationItem
+from .models import QuotationRequest, Quotation, QuotationItem, QuotationRequestCargoItem
 
 
 class QuotationItemInline(admin.TabularInline):
@@ -9,8 +9,19 @@ class QuotationItemInline(admin.TabularInline):
     readonly_fields = ('amount',)
 
 
+class QuotationRequestCargoItemInline(admin.TabularInline):
+    model = QuotationRequestCargoItem
+    extra = 1
+    fields = (
+        'container_size', 'container_qty', 'container_weight',
+        'package_type', 'package_qty', 'gross_weight', 'volume_cbm',
+        'length', 'width', 'height', 'is_stackable'
+    )
+
+
 @admin.register(QuotationRequest)
 class QuotationRequestAdmin(admin.ModelAdmin):
+    inlines = [QuotationRequestCargoItemInline]
     list_display  = ('reference_no', 'submitted_by', 'mode', 'scope', 'status', 'created_at')
     list_filter   = ('status', 'mode', 'scope')
     search_fields = ('reference_no', 'submitted_by__email', 'commodity')
