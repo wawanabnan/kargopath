@@ -1,0 +1,25 @@
+# Django Core
+Django>=5.2.6
+
+# Django REST Framework
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.3.0
+
+# CORS Headers
+django-cors-headers>=4.3.0
+
+# Django Filter (for tariffs app)
+django-filter>=23.5
+
+# Database (PostgreSQL support - optional, uncomment when needed)
+# psycopg[binary]>=3.1.0
+
+# Environment Variables Management
+python-decouple>=3.8
+
+# Image Processing (for document uploads)
+Pillow>=10.2.0
+
+# Development Tools (optional)
+# ipython>=8.20.0
+# django-debug-toolbar>=4.3.0
