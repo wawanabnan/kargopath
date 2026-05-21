@@ -1,0 +1,21 @@
+[Unit]
+Description=KargoPath Django Application
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/kargopath/backend
+Environment="PATH=/var/www/kargopath/backend/venv/bin"
+EnvironmentFile=/var/www/kargopath/backend/.env
+ExecStart=/var/www/kargopath/backend/venv/bin/gunicorn config.wsgi:application -c gunicorn_config.py
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
