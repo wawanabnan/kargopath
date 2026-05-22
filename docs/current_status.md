@@ -1,6 +1,6 @@
 # KargoPath — Current Status
 
-> **Last Updated:** 2026-05-22 11:22 WIB
+> **Last Updated:** 2026-05-22 11:39 WIB
 > **Updated By:** AI Assistant (Antigravity)
 > **Cara Pakai:** Jika chat terputus, minta AI baca file ini + `next_steps.md` + `decision_log.md` untuk melanjutkan.
 
@@ -8,7 +8,7 @@
 
 ## Fase Saat Ini
 
-**Fase 1: Multi-Tenant Foundation** — 95% selesai
+**Fase 1: Multi-Tenant Foundation** — ✅ 100% SELESAI
 
 ---
 
@@ -28,7 +28,7 @@
 - [x] Migration `users/0003_tenant_user_tenant.py` dibuat & dijalankan
 - [x] Migration `quotations/0004_...` dibuat & dijalankan
 - [x] Migration `shipments/0002_...` dibuat & dijalankan
-- [ ] ⚠️ Migration untuk `tariffs` BELUM DIBUAT
+- [x] Migration `tariffs/0001_initial.py` dibuat & dijalankan ✅
 
 ### Backend — API Layer
 - [x] `quotations/views.py` — semua ViewSet filter by tenant
@@ -48,11 +48,7 @@
 
 ### Backend — Testing
 - [x] `users/tests/test_tenant_isolation.py` dibuat (9 test cases, 277 baris)
-- [ ] ⚠️ Hanya 3/9 test PASS, sisanya error karena:
-  - Missing tariffs migration
-  - Shipment test missing required fields
-  - Default tenant menyebabkan count assertion gagal
-  - API endpoint routing 404
+- [x] ✅ **9/9 tests PASSING** — All tenant isolation tests successful!
 
 ### Frontend
 - [x] Landing page B2B-focused dengan proper 3PL terminology
@@ -73,27 +69,45 @@
 
 ---
 
-## Issues Aktif
+## ✅ Issues Resolved (Fase 1 Complete)
 
-### Issue #1: Missing Tariffs Migration
-- **File:** `tariffs/models.py` sudah punya `tenant` FK (line 41-46)
-- **Problem:** Migration file belum ada
-- **Fix:** `py -3 manage.py makemigrations tariffs && py -3 manage.py migrate`
+### ✅ Issue #1: Missing Tariffs Migration
+- **Status:** RESOLVED
+- **Fix:** Created `tariffs/migrations/0001_initial.py` with tenant FK
+- **Command:** `py -3 manage.py makemigrations tariffs && py -3 manage.py migrate`
 
-### Issue #2: Test Shipment Missing Fields
-- **File:** `users/tests/test_tenant_isolation.py` line 102-111
-- **Problem:** `Shipment.objects.create()` tidak menyertakan `quotation` (NOT NULL)
-- **Fix:** Buat quotation dummy di test, atau buat Shipment lebih lengkap
+### ✅ Issue #2: Test Shipment Missing Fields
+- **Status:** RESOLVED
+- **Fix:** Created helper methods `create_quotation()` and `create_shipment()` in test
+- **Impact:** Shipment tests now properly create required quotation relation
 
-### Issue #3: Tenant Count Assertion
-- **File:** `users/tests/test_tenant_isolation.py` line 62
-- **Problem:** Test harapkan 2 tenant, tapi migration buat default tenant jadi total 3
-- **Fix:** Ubah assertion atau gunakan `Tenant.objects.exclude(slug='kargopath-logistic')`
+### ✅ Issue #3: Tenant Count Assertion
+- **Status:** RESOLVED
+- **Fix:** Updated assertion to expect 3 tenants (including default from migration)
+- **Change:** `self.assertEqual(Tenant.objects.count(), 3)`
 
-### Issue #4: API Endpoint 404
-- **File:** `users/tests/test_tenant_isolation.py` line 185-188
-- **Problem:** `GET /api/quotations/requests/` return 404
-- **Fix:** Cek `config/urls.py` apakah routing sudah benar
+### ✅ Issue #4: API Endpoint 404
+- **Status:** RESOLVED
+- **Fixes:**
+  - Added tariffs URL to `config/urls.py`
+  - Fixed test URLs to use `/api/v1/` prefix
+  - Added DRF pagination configuration
+
+### ✅ Issue #5: Tariff API Access Denied
+- **Status:** RESOLVED
+- **Fix:** Changed test user role from 'STAFF' (invalid) to 'ADMIN'
+- **Impact:** Tariff API tests now pass (ADMIN can access tariff endpoints)
+
+---
+
+## Git Status
+
+### Latest Commits
+- **0843354** (HEAD -> main, origin/main) - fix: Complete multi-tenant foundation - all tests passing
+- **1b95d56** - docs: Add checkpoint files for crash recovery
+- **adc6c5d** - docs: Update PRD and add development documentation
+- **54bdd98** - feat: Enhance landing page with B2B-focused content
+- **8b178ff** - feat: Implement multi-tenant foundation with complete data isolation
 
 ---
 
