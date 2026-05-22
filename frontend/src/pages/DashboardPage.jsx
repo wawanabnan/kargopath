@@ -187,7 +187,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-bold text-slate-900">Activity Summary</h2>
               <p className="text-slate-500 font-medium">Monitor your current quotations and shipments.</p>
             </div>
-            <Link to="/quote" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all text-sm flex items-center gap-2 w-max">
+            <Link to="/quote" target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all text-sm flex items-center gap-2 w-max">
               + New Quote
             </Link>
           </div>

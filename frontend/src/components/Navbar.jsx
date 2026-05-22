@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext';
 const NAV_LINKS = [
   { label: 'Home',        to: '/'            },
   { label: 'Services',    to: '/services'    },
-  { label: 'Track',       to: '/tracking'    },
-  { label: 'FAQ',         to: '/#faq'        },
+  { label: 'About Us',    to: '/about'       },
   { label: 'Contact',     to: '/contact'     },
+  { label: 'FAQ',         to: '/faq'         },
 ];
 
 /**
@@ -97,6 +97,8 @@ export default function Navbar() {
               ) : (
                 <div className="flex items-center gap-3">
                   <Link to="/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`hidden md:inline-flex px-4 py-2.5 text-sm font-bold border transition-all duration-300 ${
                       dark
                         ? 'text-white border-white/30 hover:bg-white/10'
@@ -105,6 +107,8 @@ export default function Navbar() {
                     Sign In
                   </Link>
                   <Link to="/quote"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all hover:-translate-y-0.5">
                     Get a Quote &rarr;
                   </Link>

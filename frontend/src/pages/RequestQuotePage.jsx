@@ -328,7 +328,7 @@ function RoutingStep({ formData, onChange, user }) {
           <div className="space-y-3 pt-3 border-t border-slate-100">
             <div>
               <p className="text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">
-                {isOrigin ? 'Alamat Penjemputan (Pickup Address) *' : 'Alamat Pengiriman (Delivery Address) *'}
+                {isOrigin ? 'Pickup Address *' : 'Delivery Address *'}
               </p>
               <div className="relative">
                 <input
@@ -470,7 +470,7 @@ function CargoStep({ formData, onChange }) {
             onChange={e => onChange('incoterms', e.target.value)}
             className={fieldClass + " font-medium"}
           >
-            <option value="">— Pilih —</option>
+            <option value="">— Select —</option>
             {['EXW','FCA','FOB','CFR','CIF','DAP','DDP','CPT','CIP'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
@@ -511,7 +511,7 @@ function CargoStep({ formData, onChange }) {
                     onChange={e => onChange('container_size', e.target.value)}
                     className={fieldClass + " font-bold"}
                   >
-                    <option value="">Pilih</option>
+                    <option value="">Select</option>
                     <option value="20GP">20' GP Standard</option>
                     <option value="40GP">40' GP Standard</option>
                     <option value="40HC">40' HC High Cube</option>
@@ -652,11 +652,11 @@ const POINT_TYPES = [
   ['warehouse', '🏭', 'Gudang / Pabrik'],
 ];
 
-const STEP_TITLES = ['Layanan Transportasi', 'Routing & Pihak Terkait', 'Detail Spesifikasi Kargo'];
+const STEP_TITLES = ['Transportation Service', 'Routing & Parties', 'Cargo Specification Details'];
 const STEP_SUBS   = [
-  'Pilih moda transportasi utama dan cakupan layanan logistik Anda.',
-  'Tentukan lokasi asal, tujuan, serta kontak pengirim/penerima.',
-  'Berikan spesifikasi kargo Anda untuk kalkulasi tarif resmi.',
+  'Select your primary transport mode and logistics service scope.',
+  'Define origin, destination, and shipper/consignee contact details.',
+  'Provide your cargo specifications for official rate calculation.',
 ];
 
 export default function RequestQuotePage() {
@@ -949,11 +949,11 @@ export default function RequestQuotePage() {
         return;
       }
       if (needsPickup(scope) && !formData.pickup_address) {
-        setError('Silakan isi Alamat Penjemputan lengkap.');
+        setError('Please fill in the complete Pickup Address.');
         return;
       }
       if (needsDelivery(scope) && !formData.delivery_address) {
-        setError('Silakan isi Alamat Pengiriman lengkap.');
+        setError('Please fill in the complete Delivery Address.');
         return;
       }
     }
@@ -1229,7 +1229,7 @@ export default function RequestQuotePage() {
                                       onChange={e => updateCargoItem(index, 'container_size', e.target.value)}
                                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-md focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all text-sm font-medium text-slate-900"
                                     >
-                                      <option value="">Pilih</option>
+                                      <option value="">Select</option>
                                       <option value="20GP">20' GP Standard</option>
                                       <option value="40GP">40' GP Standard</option>
                                       <option value="40HC">40' HC High Cube</option>

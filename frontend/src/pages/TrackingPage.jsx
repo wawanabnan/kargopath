@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Footer from '../components/Footer';
 
 export default function TrackingPage() {
   const [number, setNumber] = useState('');
@@ -38,7 +39,7 @@ export default function TrackingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(59,130,246,0.12),transparent_60%)]" />
         <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
           <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-3">Live Tracking</p>
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5">Track Your Shipment</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">Track Your Shipment</h1>
           <p className="text-slate-400 text-lg font-medium">Enter your tracking number to get real-time status updates.</p>
         </div>
       </div>
@@ -116,6 +117,8 @@ export default function TrackingPage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

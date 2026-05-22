@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Footer from '../components/Footer';
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
@@ -19,7 +20,7 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_40%,rgba(59,130,246,0.12),transparent_60%)]" />
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-3">Get in Touch</p>
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5">Contact Us</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">Contact Us</h1>
           <p className="text-slate-400 text-lg font-medium">Have questions? Our team is ready to help you find the right logistics solution.</p>
         </div>
       </div>
@@ -107,6 +108,8 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

@@ -1,20 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/Footer';
 
 const FAQS = [
   {
-    q: "How fast can I get a quotation?",
-    a: "Through our centralized dashboard, standard routes are quoted instantly. Complex project logistics may take up to 24 hours."
+    q: "What type of companies does KargoPath serve?",
+    a: "We serve B2B clients including manufacturers, importers, exporters, retailers, and businesses requiring professional logistics solutions. We do not serve retail or individual customers."
   },
   {
-    q: "Do I need to sign a contract to use the platform?",
-    a: "You can create a free account and request quotes without any binding contract. Contracts are only required upon booking confirmation."
+    q: "Do you handle international freight forwarding?",
+    a: "Yes, we provide international freight forwarding via sea, air, and land to 50+ countries. We handle both import and export shipments with full customs clearance support."
   },
   {
-    q: "What documents are required for international shipping?",
-    a: "Typically you will need a Commercial Invoice and Packing List. Our platform will automatically guide you on any additional customs documents based on your route."
-  }
+    q: "How fast can I receive a quotation?",
+    a: "Standard routes are quoted within 2-4 hours during business hours. Complex project cargo may take up to 24 hours. Our technology platform enables faster quotation processing."
+  },
+  {
+    q: "Are you a licensed customs broker?",
+    a: "Yes, we are a licensed PPJK (Pengusaha Pengurusan Jasa Kepabeanan) customs broker, authorized to handle all import/export customs clearance in Indonesia."
+  },
+  {
+    q: "Can you handle project cargo and heavy lift?",
+    a: "Yes, we specialize in project cargo including heavy lift, oversized cargo (OOG), break bulk, and specialized industrial equipment requiring special handling."
+  },
 ];
 
 export default function LandingPage() {
@@ -25,6 +34,13 @@ export default function LandingPage() {
 
       {/* ── HERO (SaaS Style) ────────────────────────────────────────── */}
       <section className="pt-32 pb-24 bg-slate-900 relative overflow-hidden">
+        {/* Decorative Background Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-radial from-blue-500/20 to-transparent"></div>
+        </div>
+        
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto">
             
@@ -43,11 +59,13 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to={isAuthenticated ? '/dashboard' : '/register'}
-                className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors">
+                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold transition-all backdrop-blur-sm">
                 {isAuthenticated ? 'Go to Dashboard' : 'Try Platform Now'}
               </Link>
               <Link to="/quote"
-                className="inline-flex items-center justify-center px-8 py-4 bg-transparent border border-slate-600 hover:bg-slate-800 text-white font-bold transition-colors">
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold transition-all backdrop-blur-sm">
                 Request Quotation
               </Link>
             </div>
@@ -55,53 +73,173 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TRACKING BAR ─────────────────────────────────────────────── */}
-      <section className="bg-white border-y border-slate-200 py-12">
-        <div className="max-w-3xl mx-auto px-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 text-center">Quick Shipment Tracking</p>
-          <div className="flex flex-col sm:flex-row gap-0 border border-slate-300">
-            <input type="text" placeholder="Enter tracking number (e.g. KP-2026-A3F2)"
-              className="flex-1 px-5 py-4 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 transition-colors" />
-            <Link to="/tracking"
-              className="px-10 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors whitespace-nowrap border-l border-slate-900 flex items-center justify-center">
-              Track Cargo
+      {/* ── STATISTICS SECTION ───────────────────────────────────────── */}
+      <section className="py-16 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { number: '1,500+', label: 'Shipments Delivered', icon: '📦' },
+              { number: '50+', label: 'Countries Reached', icon: '🌍' },
+              { number: '98%', label: 'On-Time Delivery', icon: '⏱️' },
+              { number: '24/7', label: 'Customer Support', icon: '💬' },
+            ].map(stat => (
+              <div key={stat.label} className="space-y-3">
+                <div className="text-4xl">{stat.icon}</div>
+                <div className="text-4xl md:text-5xl font-extrabold text-blue-600">{stat.number}</div>
+                <div className="text-sm font-medium text-slate-600">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CORE 3PL SERVICES ────────────────────────────────────────── */}
+      <section className="py-24 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center max-w-3xl mx-auto">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
+              Complete 3PL Solutions
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Comprehensive Logistics Services for Your Business
+            </h2>
+            <p className="text-lg text-slate-500">
+              From freight forwarding to customs clearance, we provide end-to-end logistics solutions powered by technology.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { 
+                icon: '📦',
+                title: 'Freight Forwarding',
+                desc: 'International & domestic cargo forwarding via sea, air, and land. Technology-enabled instant quotations and real-time tracking for businesses.',
+                link: '/services'
+              },
+              { 
+                icon: '🛃',
+                title: 'Customs Brokerage',
+                desc: 'Licensed PPJK customs broker. Expert handling of import/export clearance, duty calculation, and regulatory compliance.',
+                link: '/services'
+              },
+              { 
+                icon: '🏗️',
+                title: 'Project Cargo',
+                desc: 'Specialized logistics for heavy lift, oversized, and out-of-gauge cargo. Expert project management for complex shipments.',
+                link: '/services'
+              },
+            ].map(s => (
+              <Link key={s.title} to={s.link} className="group">
+                <div className="bg-slate-50 p-10 border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all h-full">
+                  <span className="text-4xl block mb-6">{s.icon}</span>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
+                    {s.title}
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed mb-4">{s.desc}</p>
+                  <span className="text-blue-600 font-semibold text-sm group-hover:underline">
+                    Learn More →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <p className="text-sm text-slate-500 mb-4">
+              <strong className="text-slate-700">B2B Focused:</strong> Our services are designed for companies and business professionals, not retail customers.
+            </p>
+            <Link to="/services" className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5">
+              View All Services →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── COMPREHENSIVE CARGO SERVICES ─────────────────────────────── */}
-      <section className="py-24 bg-white border-t border-slate-200">
+      {/* ── WHY CHOOSE US ────────────────────────────────────────────── */}
+      <section className="py-24 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-16 text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Complete Freight Capabilities</h2>
-            <p className="text-lg text-slate-500">
-              Whether you need to ship a small parcel or charter a full vessel, our extensive network and digital infrastructure handle it all.
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Why Leading Companies Choose KargoPath
+            </h2>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+              We're not just another freight forwarder. We're your logistics technology partner.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { 
-                icon: '🚢',
-                title: 'Sea Freight (FCL & LCL)',
-                desc: 'Cost-effective ocean shipping for large volumes. We handle both Full Container Loads (FCL) and Less than Container Loads (LCL) globally.' 
+              {
+                icon: '🏆',
+                title: 'Industry Expertise',
+                desc: '15+ years of combined experience in international freight forwarding and customs brokerage.'
               },
-              { 
-                icon: '✈️',
-                title: 'Air Freight',
-                desc: 'Priority air cargo solutions for time-sensitive and high-value shipments, ensuring rapid delivery to any destination.' 
+              {
+                icon: '💻',
+                title: 'Technology First',
+                desc: 'Built by logistics professionals who understand the pain points. Modern tech stack for reliability.'
               },
-              { 
-                icon: '🚛',
-                title: 'Land Trucking (FTL & LTL)',
-                desc: 'Reliable domestic and cross-border trucking services. From Full Truckload (FTL) to Less than Truckload (LTL) distribution.' 
+              {
+                icon: '🌐',
+                title: 'Global Network',
+                desc: 'Strategic partnerships with 200+ carriers and agents across 50+ countries worldwide.'
               },
-            ].map(s => (
-              <div key={s.title} className="bg-slate-50 p-10 border border-slate-200">
-                <span className="text-3xl block mb-6">{s.icon}</span>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{s.title}</h3>
-                <p className="text-slate-500 leading-relaxed">{s.desc}</p>
+              {
+                icon: '💰',
+                title: 'Transparent Pricing',
+                desc: 'No hidden fees. All charges itemized upfront. Compare rates and make informed decisions.'
+              },
+              {
+                icon: '🔒',
+                title: 'Secure & Compliant',
+                desc: 'Licensed PPJK customs broker. IATA certified. Full cargo insurance coverage on all shipments.'
+              },
+              {
+                icon: '⚡',
+                title: 'Fast Response',
+                desc: 'Average quotation time: 3 hours. Average support response: 15 minutes. We value your time.'
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-blue-500 transition-colors">
+                <div className="text-4xl mb-4">{item.icon}</div>
+                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── INDUSTRIES SERVED ────────────────────────────────────────── */}
+      <section className="py-24 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
+              Industries We Serve
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Trusted by Leading Industries
+            </h2>
+            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+              We provide specialized 3PL solutions for diverse business sectors across Indonesia.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: '🏭', title: 'Manufacturing', desc: 'Raw materials & finished goods' },
+              { icon: '🏪', title: 'Retail & E-commerce', desc: 'Distribution & fulfillment' },
+              { icon: '🏗️', title: 'Construction', desc: 'Heavy equipment & materials' },
+              { icon: '⚡', title: 'Energy & Mining', desc: 'Project cargo & specialized' },
+              { icon: '🍎', title: 'FMCG', desc: 'Fast-moving consumer goods' },
+              { icon: '💊', title: 'Pharmaceutical', desc: 'Temperature-controlled' },
+              { icon: '🚗', title: 'Automotive', desc: 'Parts & vehicle logistics' },
+              { icon: '📦', title: 'Import/Export', desc: 'International trade' },
+            ].map(industry => (
+              <div key={industry.title} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-center">
+                <div className="text-4xl mb-3">{industry.icon}</div>
+                <h3 className="font-bold text-slate-900 mb-2">{industry.title}</h3>
+                <p className="text-sm text-slate-600">{industry.desc}</p>
               </div>
             ))}
           </div>
@@ -165,16 +303,22 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-lg text-slate-500">Everything you need to know about the platform.</p>
+            <p className="text-lg text-slate-500">Quick answers to common questions about our 3PL services.</p>
           </div>
           
           <div className="space-y-4">
             {FAQS.map((faq, idx) => (
-              <div key={idx} className="bg-white border border-slate-200 p-6">
+              <div key={idx} className="bg-white border border-slate-200 p-6 rounded-xl">
                 <h4 className="text-lg font-bold text-slate-900 mb-2">{faq.q}</h4>
                 <p className="text-slate-600 leading-relaxed">{faq.a}</p>
               </div>
             ))}
+          </div>
+          
+          <div className="text-center mt-8">
+            <Link to="/faq" className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline text-lg">
+              View All FAQs →
+            </Link>
           </div>
         </div>
       </section>
@@ -195,41 +339,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="bg-slate-950 text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="md:col-span-2">
-              <span className="text-xl font-bold text-white block mb-5">KargoPath</span>
-              <p className="text-slate-500 leading-relaxed mb-6 max-w-xs">
-                The First Digital Logistics Operating System for Indonesia's Freight Forwarding Ecosystem.
-              </p>
-              <div className="space-y-1.5 text-sm">
-                <p><span className="text-slate-600">Email: </span><span className="text-slate-400">hello@kargopath.com</span></p>
-                <p><span className="text-slate-600">Phone: </span><span className="text-slate-400">+62 21 555 1234</span></p>
-              </div>
-            </div>
-
-            {[
-              { heading: 'Platform', links: [['Features', '#'], ['Pricing', '#'], ['API Docs', '#']] },
-              { heading: 'Portal',   links: [['Track Cargo', '/tracking'], ['Request Quote', '/quote'], ['Sign In', '/login']] },
-            ].map(({ heading, links }) => (
-              <div key={heading}>
-                <p className="text-white font-bold text-xs uppercase tracking-widest mb-5">{heading}</p>
-                <ul className="space-y-3">
-                  {links.map(([label, to]) => (
-                    <li key={label}><Link to={to} className="text-sm hover:text-white transition-colors">{label}</Link></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-slate-800 mt-16 pt-8 flex justify-between items-center">
-            <p className="text-sm text-slate-600">© 2026 PT KargoPath Logistics Nusantara.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

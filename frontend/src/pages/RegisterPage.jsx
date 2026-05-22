@@ -173,7 +173,7 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-extrabold text-white mb-1.5">Create Your Account</h1>
           <p className="text-blue-100 text-sm font-medium">
             Already have one?{' '}
-            <Link to="/login" className="text-white font-bold underline underline-offset-2 hover:text-blue-200">Sign in here</Link>
+            <Link to="/login" target="_blank" rel="noopener noreferrer" className="text-white font-bold underline underline-offset-2 hover:text-blue-200">Sign in here</Link>
           </p>
         </div>
 

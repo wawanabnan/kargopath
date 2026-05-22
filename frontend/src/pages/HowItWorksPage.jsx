@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Footer from '../components/Footer';
 
 const STEPS = [
   {
@@ -37,7 +38,7 @@ export default function HowItWorksPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(59,130,246,0.12),transparent_60%)]" />
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-3">The Process</p>
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5">How It Works</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-5">How It Works</h1>
           <p className="text-slate-400 text-lg font-medium">From quote to delivery — a transparent, end-to-end process designed for your business.</p>
         </div>
       </div>
@@ -76,10 +77,12 @@ export default function HowItWorksPage() {
       <div className="bg-slate-50 border-t border-slate-100 py-16 text-center">
         <h2 className="text-3xl font-extrabold text-slate-900 mb-3">Ready to Get Started?</h2>
         <p className="text-slate-500 font-medium mb-8">It takes less than 5 minutes to submit your first quotation request.</p>
-        <Link to="/quote" className="inline-flex items-center gap-2 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/20 transition-all hover:-translate-y-1 text-lg">
+        <Link to="/quote" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/20 transition-all hover:-translate-y-1 text-lg">
           Request a Quote Now →
         </Link>
       </div>
+
+      <Footer />
     </div>
   );
 }

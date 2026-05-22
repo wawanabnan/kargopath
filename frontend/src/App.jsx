@@ -5,9 +5,11 @@ import Navbar from './components/Navbar';
 
 import LandingPage      from './pages/LandingPage';
 import ServicesPage     from './pages/ServicesPage';
+import AboutPage        from './pages/AboutPage';
 import HowItWorksPage   from './pages/HowItWorksPage';
 import TrackingPage     from './pages/TrackingPage';
 import ContactPage      from './pages/ContactPage';
+import FAQPage          from './pages/FAQPage';
 import RequestQuotePage from './pages/RequestQuotePage';
 import RegisterPage     from './pages/RegisterPage';
 import LoginPage        from './pages/LoginPage';
@@ -52,9 +54,11 @@ function Layout() {
         {/* Public pages with shared Navbar */}
         <Route path="/"             element={<LandingPage />} />
         <Route path="/services"     element={<ServicesPage />} />
+        <Route path="/about"        element={<AboutPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/tracking"     element={<TrackingPage />} />
         <Route path="/contact"      element={<ContactPage />} />
+        <Route path="/faq"          element={<FAQPage />} />
 
         {/* Standalone pages (own layout) */}
         <Route path="/quote"    element={<RequestQuotePage />} />
