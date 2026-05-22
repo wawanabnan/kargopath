@@ -38,6 +38,13 @@ class Tariff(models.Model):
         ('USD', 'US Dollar'),
     ]
     
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='tariffs',
+        help_text="Which 3PL company owns this tariff"
+    )
+    
     # Basic Info
     mode = models.CharField(max_length=10, choices=MODE_CHOICES)
     scope = models.CharField(max_length=10, choices=SCOPE_CHOICES)

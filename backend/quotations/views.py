@@ -28,17 +28,19 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        tenant = user.tenant
+        
         if user.role in ('ADMIN', 'SALES', 'OPS'):
-            qs = QuotationRequest.objects.select_related(
+            qs = QuotationRequest.objects.filter(tenant=tenant).select_related(
                 'submitted_by', 'submitted_by__company', 'sales_in_charge'
-            ).all()
+            )
             # Optional filter by status
             status_filter = self.request.query_params.get('status')
             if status_filter:
                 qs = qs.filter(status=status_filter.upper())
             return qs
         # Client sees only their own
-        return QuotationRequest.objects.filter(submitted_by=user)
+        return QuotationRequest.objects.filter(tenant=tenant, submitted_by=user)
 
     def perform_create(self, serializer):
         serializer.save(submitted_by=self.request.user, status='PENDING')
@@ -88,12 +90,15 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        tenant = user.tenant
+        
         if user.role in ('ADMIN', 'SALES', 'OPS'):
-            return Quotation.objects.select_related(
+            return Quotation.objects.filter(tenant=tenant).select_related(
                 'request', 'request__submitted_by', 'created_by'
-            ).prefetch_related('items').all()
+            ).prefetch_related('items')
         # Client: only quotations linked to their own requests
         return Quotation.objects.filter(
+            tenant=tenant,
             request__submitted_by=user
         ).prefetch_related('items')
 
@@ -182,7 +187,9 @@ class QuotationItemViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        tenant = self.request.user.tenant
         return QuotationItem.objects.filter(
+            tenant=tenant,
             quotation_id=self.kwargs['quotation_pk']
         )
 

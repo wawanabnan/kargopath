@@ -10,9 +10,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        tenant = user.tenant
+        
         if user.role in ('ADMIN', 'SALES', 'OPS'):
-            return Shipment.objects.all().prefetch_related('milestones', 'documents')
-        return Shipment.objects.filter(client=user).prefetch_related('milestones', 'documents')
+            return Shipment.objects.filter(tenant=tenant).prefetch_related('milestones', 'documents')
+        return Shipment.objects.filter(tenant=tenant, client=user).prefetch_related('milestones', 'documents')
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def milestones(self, request, pk=None):

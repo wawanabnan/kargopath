@@ -22,8 +22,8 @@ class QuotationRequestCargoItemInline(admin.TabularInline):
 @admin.register(QuotationRequest)
 class QuotationRequestAdmin(admin.ModelAdmin):
     inlines = [QuotationRequestCargoItemInline]
-    list_display  = ('reference_no', 'submitted_by', 'mode', 'scope', 'status', 'created_at')
-    list_filter   = ('status', 'mode', 'scope')
+    list_display  = ('reference_no', 'tenant', 'submitted_by', 'mode', 'scope', 'status', 'created_at')
+    list_filter   = ('tenant', 'status', 'mode', 'scope')
     search_fields = ('reference_no', 'submitted_by__email', 'commodity')
     readonly_fields = ('reference_no', 'created_at', 'updated_at', 'derived_services')
     fieldsets = (
@@ -66,15 +66,29 @@ class QuotationRequestAdmin(admin.ModelAdmin):
             'fields': ('derived_services', 'created_at', 'updated_at'),
         }),
     )
+    
+    def get_queryset(self, request):
+        """Filter quotation requests by tenant for non-superusers."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(tenant=request.user.tenant)
 
 
 @admin.register(Quotation)
 class QuotationAdmin(admin.ModelAdmin):
-    list_display  = ('quotation_number', 'request', 'status', 'grand_total', 'currency', 'valid_until')
-    list_filter   = ('status', 'currency')
+    list_display  = ('quotation_number', 'tenant', 'request', 'status', 'grand_total', 'currency', 'valid_until')
+    list_filter   = ('tenant', 'status', 'currency')
     search_fields = ('quotation_number', 'request__reference_no')
     readonly_fields = ('quotation_number', 'subtotal', 'tax_amount', 'grand_total', 'created_at', 'updated_at')
     inlines = [QuotationItemInline]
+    
+    def get_queryset(self, request):
+        """Filter quotations by tenant for non-superusers."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(tenant=request.user.tenant)
 
 
 @admin.register(QuotationItem)

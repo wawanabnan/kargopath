@@ -12,6 +12,11 @@ class Shipment(models.Model):
         ('POD_CONFIRMED', 'POD Confirmed'),
     ]
 
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='shipments'
+    )
     shipment_number = models.CharField(max_length=50, unique=True)
     quotation = models.OneToOneField(Quotation, on_delete=models.CASCADE, related_name='shipment')
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipments')
@@ -26,6 +31,11 @@ class Shipment(models.Model):
         return f"{self.shipment_number} - {self.client.email}"
 
 class ShipmentMilestone(models.Model):
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='shipment_milestones'
+    )
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, related_name='milestones')
     status_code = models.CharField(max_length=100)
     description = models.TextField()
@@ -46,6 +56,12 @@ class ShipmentDocument(models.Model):
         ('OTHER', 'Other'),
     ]
     
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='shipment_documents'
+    )
+
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, related_name='documents')
     document_type = models.CharField(max_length=50, choices=DOC_TYPES)
     file = models.FileField(upload_to='shipment_docs/')

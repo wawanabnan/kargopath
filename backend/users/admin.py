@@ -25,8 +25,8 @@ class ClientProfileInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display   = ('email', 'first_name', 'last_name', 'role', 'client_type', 'kyc_level', 'is_active')
-    list_filter    = ('role', 'client_type', 'kyc_level', 'is_active')
+    list_display   = ('email', 'first_name', 'last_name', 'role', 'tenant', 'client_type', 'kyc_level', 'is_active')
+    list_filter    = ('tenant', 'role', 'client_type', 'kyc_level', 'is_active')
     search_fields  = ('email', 'first_name', 'last_name')
     ordering       = ('-date_joined',)
     inlines        = [ClientProfileInline]
@@ -34,7 +34,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None,           {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name')}),
-        ('Role & KYC',   {'fields': ('role', 'client_type', 'kyc_level', 'company')}),
+        ('Role & KYC',   {'fields': ('role', 'client_type', 'kyc_level', 'company', 'tenant')}),
         ('Permissions',  {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
@@ -56,3 +56,10 @@ class UserAdmin(BaseUserAdmin):
         queryset.update(kyc_level=3)
         self.message_user(request, f"{queryset.count()} users promoted to Trusted Partner (Level 3).")
     promote_to_level3.short_description = "⭐ Promote selected users to KYC Level 3 (Trusted Partner)"
+    
+    def get_queryset(self, request):
+        """Filter users by tenant for non-superusers."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs  # Superuser sees all tenants
+        return qs.filter(tenant=request.user.tenant)

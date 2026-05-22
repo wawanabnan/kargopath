@@ -54,6 +54,13 @@ class QuotationRequest(models.Model):
         ('warehouse', 'Warehouse / Factory'),
     )
 
+    # ── Tenant ───────────────────────────────────────────────────────────────
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='quotation_requests'
+    )
+
     # ── Identification ───────────────────────────────────────────────────────
     reference_no   = models.CharField(max_length=30, unique=True, default=generate_ref)
     submitted_by   = models.ForeignKey(
@@ -199,6 +206,12 @@ class Quotation(models.Model):
     atas QuotationRequest dari client.
     """
 
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='quotations'
+    )
+
     STATUS_CHOICES = (
         ('DRAFT',    'Draft'),
         ('SENT',     'Sent to Client'),
@@ -257,6 +270,12 @@ class Quotation(models.Model):
 class QuotationItem(models.Model):
     """Line-item biaya di dalam sebuah Quotation."""
 
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='quotation_items'
+    )
+
     CHARGE_CATEGORIES = (
         ('freight',   'Main Freight'),
         ('trucking',  'Trucking'),
@@ -289,6 +308,12 @@ class QuotationRequestCargoItem(models.Model):
     Line item untuk spesifikasi kargo berganda.
     Satu QuotationRequest bisa punya banyak cargo items.
     """
+
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='cargo_items'
+    )
     quotation_request = models.ForeignKey(
         QuotationRequest,
         on_delete=models.CASCADE,

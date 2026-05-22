@@ -28,3 +28,8 @@ class ShipmentSerializer(serializers.ModelSerializer):
         model = Shipment
         fields = '__all__'
         read_only_fields = ('shipment_number', 'created_at', 'updated_at', 'client')
+    
+    def create(self, validated_data):
+        """Auto-set tenant from authenticated user."""
+        validated_data['tenant'] = self.context['request'].user.tenant
+        return super().create(validated_data)

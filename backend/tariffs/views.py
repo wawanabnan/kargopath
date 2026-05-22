@@ -22,7 +22,8 @@ class TariffViewSet(viewsets.ModelViewSet):
         # Only Sales and Admin can see tariffs
         if self.request.user.role not in ['SALES', 'ADMIN']:
             return Tariff.objects.none()
-        return Tariff.objects.filter(is_active=True)
+        tenant = self.request.user.tenant
+        return Tariff.objects.filter(tenant=tenant, is_active=True)
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

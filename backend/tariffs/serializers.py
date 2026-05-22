@@ -33,3 +33,8 @@ class TariffSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Destination address is required when destination type is ADDRESS")
         
         return data
+    
+    def create(self, validated_data):
+        """Auto-set tenant from authenticated user."""
+        validated_data['tenant'] = self.context['request'].user.tenant
+        return super().create(validated_data)

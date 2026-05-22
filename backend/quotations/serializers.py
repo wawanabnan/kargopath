@@ -122,12 +122,17 @@ class QuotationRequestSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create QuotationRequest with nested cargo items and auto-aggregate to flat fields."""
         cargo_items_data = validated_data.pop('cargo_items', [])
+        
+        # Auto-set tenant from authenticated user
+        validated_data['tenant'] = self.context['request'].user.tenant
+        
         quotation_request = QuotationRequest.objects.create(**validated_data)
         
         # Create cargo items
         for item_data in cargo_items_data:
             QuotationRequestCargoItem.objects.create(
                 quotation_request=quotation_request,
+                tenant=quotation_request.tenant,
                 **item_data
             )
         
@@ -210,3 +215,8 @@ class QuotationSerializer(serializers.ModelSerializer):
             'quotation_number', 'subtotal', 'tax_amount',
             'grand_total', 'created_at', 'updated_at',
         )
+    
+    def create(self, validated_data):
+        """Auto-set tenant from authenticated user."""
+        validated_data['tenant'] = self.context['request'].user.tenant
+        return super().create(validated_data)

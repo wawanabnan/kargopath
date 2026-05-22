@@ -40,6 +40,35 @@ class Company(models.Model):
         return self.name
 
 
+class Tenant(models.Model):
+    """
+    Represents a 3PL company using KargoPath platform.
+    Each tenant has complete data isolation.
+    """
+    name = models.CharField(max_length=255, help_text="Company name")
+    slug = models.SlugField(unique=True, help_text="URL-safe identifier (for subdomain)")
+    
+    # Contact
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=50, blank=True)
+    
+    # Settings (for future white-label)
+    logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True)
+    primary_color = models.CharField(max_length=7, default='#2563eb', help_text="Hex color code")
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Tenant'
+        verbose_name_plural = 'Tenants'
+    
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractUser):
     username = None
     email    = models.EmailField(_('email address'), unique=True)
@@ -68,6 +97,12 @@ class User(AbstractUser):
     kyc_level   = models.IntegerField(choices=KYC_LEVEL_CHOICES, default=1)
     company     = models.ForeignKey(
         Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='users'
+    )
+    tenant = models.ForeignKey(
+        Tenant,
+        on_delete=models.CASCADE,
+        related_name='users',
+        help_text="Which 3PL company this user belongs to"
     )
 
     USERNAME_FIELD  = 'email'
