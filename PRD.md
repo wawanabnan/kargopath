@@ -3,6 +3,9 @@
 ## 1. Overview
 Platform manajemen logistik berbasis web yang menghubungkan tim internal (Sales, Ops, Admin) dengan klien (Shipper) dalam satu portal terpadu.
 
+**Visi Produk:**
+KargoPath dirancang sebagai **platform SaaS multi-tenant** yang memungkinkan beberapa perusahaan 3PL menggunakan sistem yang sama dengan isolasi data yang lengkap. Setiap tenant (perusahaan 3PL) memiliki data, pricing, dan konfigurasi sendiri.
+
 **Komponen Utama:**
 1. **Public Website (Corporate 3PL):**
    - Profil Perusahaan
@@ -12,6 +15,10 @@ Platform manajemen logistik berbasis web yang menghubungkan tim internal (Sales,
    - Manajemen Logistik Internal
    - Alur: Quotation → Shipment → Delivery
    - Autentikasi dan Role-based Access Control (RBAC)
+3. **Multi-Tenant Architecture:**
+   - Isolasi data per tenant (perusahaan 3PL)
+   - Tenant management & configuration
+   - Scalable untuk multiple 3PL companies
 
 ---
 
@@ -53,9 +60,12 @@ Untuk menghindari kebingungan dalam sistem, layanan logistik KargoPath didefinis
 - **F1.1** — Registrasi & Login (Email + Password)
 - **F1.2** — Login via Magic Link / Token (untuk client dari email sales)
 - **F1.3** — Role-based Access Control (RBAC)
-- **F1.4** — Company/Organization management untuk client
-- **F1.5** — Invite user (sales invite client via email dengan link)
-- **F1.6** — Password reset & session management
+- **F1.4** — **Tenant Management** — Setiap user belongs to tenant (perusahaan 3PL)
+- **F1.5** — **Tenant Isolation** — User hanya bisa akses data tenant mereka
+- **F1.6** — Company/Organization management untuk client (berbeda dari tenant)
+- **F1.7** — Invite user (sales invite client via email dengan link)
+- **F1.8** — Password reset & session management
+- **F1.9** — Superuser access untuk platform management (cross-tenant)
 
 ---
 
@@ -235,34 +245,103 @@ Fokus MVP untuk bisa go-live dalam **8–12 minggu**:
 
 ---
 
-## 5. Rekomendasi Database & Tech Stack
-**Tech Stack:**
-- **Backend:** Django + Django REST Framework (DRF)
-- **Database:** PostgreSQL (Direkomendasikan karena dukungan `JSONField`, ekstensi geospasial/PostGIS, dan performa konkurensi data logistik yang sangat baik).
-- **Frontend:** React.js (menggunakan Vite) untuk UI Client Portal yang interaktif.
-- **Styling:** CSS Modern / Tailwind CSS.
+## 5. Arsitektur Multi-Tenant
+
+### Konsep Tenant
+**Tenant** = Perusahaan 3PL yang menggunakan platform KargoPath (contoh: PT Logistik Nusantara, PT Cargo Express, dll).
+
+**Perbedaan Tenant vs Company:**
+- **Tenant:** Operator 3PL yang menggunakan KargoPath
+- **Company:** Perusahaan client (customer dari tenant)
+- **User:** Belongs to tenant (tempat kerja) dan optionally belongs to company (jika corporate client)
+
+### Isolasi Data
+Setiap tenant memiliki isolasi data lengkap:
+- ✅ Quotation & Shipment per tenant
+- ✅ Tariff & Pricing per tenant
+- ✅ User & Client per tenant
+- ✅ Document & Milestone per tenant
+
+### Database Design
+Semua model bisnis memiliki foreign key `tenant`:
+```python
+class QuotationRequest(models.Model):
+    tenant = models.ForeignKey('Tenant', on_delete=models.CASCADE)
+    # ... fields lainnya
+
+class Shipment(models.Model):
+    tenant = models.ForeignKey('Tenant', on_delete=models.CASCADE)
+    # ... fields lainnya
+```
+
+### API Filtering
+Semua API endpoint otomatis filter berdasarkan tenant user yang login:
+- Client hanya melihat data tenant mereka
+- Sales/Ops hanya melihat data tenant mereka
+- Superuser (platform admin) bisa melihat semua tenant
+
+### Deployment Models
+**Phase 1 (Current):**
+- Single-tenant deployment untuk PT. Kargopath Logistic Nusantara
+- Database sudah siap untuk multi-tenant (dengan tenant_id)
+
+**Phase 2 (Future):**
+- Multi-tenant SaaS (beberapa 3PL companies)
+- Subdomain per tenant: `tenant-a.kargopath.com`
+- White-label capability (logo, warna, branding)
+
+**Phase 3 (Optional):**
+- Self-hosted option untuk enterprise clients
+- Downloadable package dengan installer
 
 ---
 
-## 6. Rencana Tahapan Pengembangan (Roadmap)
-### Fase 1: Setup & Arsitektur
-- Setup project Django & konfigurasi PostgreSQL.
-- Membuat struktur aplikasi Django (e.g., `users`, `shipments`, `quotations`, `public`).
-- Setup framework Frontend (Vite/React).
+## 6. Rekomendasi Database & Tech Stack
+**Tech Stack:**
+- **Backend:** Django + Django REST Framework (DRF)
+- **Database:** PostgreSQL (Direkomendasikan karena dukungan `JSONField`, ekstensi geospasial/PostGIS, performa konkurensi data logistik yang sangat baik, dan **multi-tenant row-level security**)
+- **Frontend:** React.js (menggunakan Vite) untuk UI Client Portal yang interaktif
+- **Styling:** CSS Modern / Tailwind CSS
+- **Multi-Tenant:** Shared database dengan tenant_id isolation (scalable untuk 100+ tenants)
+- **Authentication:** JWT dengan tenant context
+- **Middleware:** TenantMiddleware untuk automatic tenant filtering
+
+---
+
+## 7. Rencana Tahapan Pengembangan (Roadmap)
+### Fase 1: Setup & Arsitektur Multi-Tenant
+- ✅ Setup project Django & konfigurasi PostgreSQL
+- ✅ Membuat struktur aplikasi Django (e.g., `users`, `shipments`, `quotations`, `public`)
+- ✅ Setup framework Frontend (Vite/React)
+- 🔄 **Implementasi Multi-Tenant Foundation:**
+  - Buat model Tenant
+  - Tambah tenant FK ke semua model bisnis
+  - Implementasi TenantMiddleware
+  - Update API views dengan tenant filtering
+  - Migration & assign existing data ke default tenant
 
 ### Fase 2: Backend API & Database Models
-- Membuat model database untuk User, Quotation, Shipment.
-- Membangun REST API Endpoints & Autentikasi (JWT).
+- Membuat model database untuk User, Quotation, Shipment (dengan tenant isolation)
+- Membangun REST API Endpoints & Autentikasi (JWT dengan tenant context)
+- Implementasi tenant-aware querysets
 
 ### Fase 3: Frontend - Public Website
-- Mendesain UI premium untuk Landing Page.
-- Integrasi API pencarian resi publik.
+- Mendesain UI premium untuk Landing Page
+- Integrasi API pencarian resi publik
 
 ### Fase 4: Frontend - Client Portal & Internal Dashboard
-- Membuat halaman login yang aman.
-- Dashboard analytics dan CRUD untuk Quotation & Shipment.
+- Membuat halaman login yang aman
+- Dashboard analytics dan CRUD untuk Quotation & Shipment
+- Tenant-aware UI components
 
 ### Fase 5: Polish & Optimasi
-- Menambahkan animasi transisi (Micro-animations).
-- Testing performa & keamanan.
-- Persiapan Deployment.
+- Menambahkan animasi transisi (Micro-animations)
+- Testing performa & keamanan (termasuk tenant isolation testing)
+- Persiapan Deployment
+
+### Fase 6 (Future): Multi-Tenant SaaS Features
+- Tenant onboarding flow
+- Subdomain routing per tenant
+- White-label customization (logo, colors)
+- Billing & subscription management
+- Self-service tenant registration
