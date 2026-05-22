@@ -32,48 +32,82 @@ OK
 
 ## Prioritas 2: Fase 2 — Backend API Refinement
 
-### Step 2.1 — Cek dan lengkapi URL routing
-- Pastikan `config/urls.py` punya semua endpoint yang dibutuhkan
-- Verifikasi API prefix: `/api/v1/` atau `/api/`
+**Status:** 🔄 IN PROGRESS  
+**Fokus:** Backend foundation harus solid sebelum build UI
 
-### Step 2.2 — Authentication flow dengan tenant context
-- JWT token harus include tenant info
-- Login response harus return tenant data
+### Step 2.1 — JWT dengan Tenant Context
+**Goal:** Token JWT harus include tenant information
 
-### Step 2.3 — Quotation accept → auto-create Shipment
-- `quotations/views.py` line 139-144: `Shipment.objects.create()` perlu tambah `tenant`
-- Ini bug yang sudah ada di kode sekarang
+**Tasks:**
+- [ ] Update `CustomTokenObtainPairView` untuk include tenant data di token
+- [ ] Token response harus return: `user`, `tenant`, `access`, `refresh`
+- [ ] Verify token payload contains tenant_id
 
-### Step 2.4 — Tariff auto-calculation
-- Implementasi kalkulasi harga otomatis berdasarkan tarif master
+**Files:**
+- `users/views.py` - CustomTokenObtainPairView
+- `users/serializers.py` - Token serializer (jika ada)
+
+### Step 2.2 — Quotation Request Flow (Lead Generation)
+**Goal:** Implement "draft quotation" untuk support lead generation strategy
+
+**Flow:**
+1. User isi form quotation (public, tanpa login)
+2. Form data disimpan sebagai "draft" (session/localStorage)
+3. Saat submit → redirect ke register/login
+4. Setelah register → draft otomatis tersimpan sebagai QuotationRequest
+
+**Tasks:**
+- [ ] Design: Bagaimana simpan draft sebelum user register? (session? localStorage?)
+- [ ] API endpoint: `POST /api/v1/quotations/requests/draft/` (public access)
+- [ ] API endpoint: `POST /api/v1/quotations/requests/submit/` (authenticated)
+- [ ] Logic: Convert draft → QuotationRequest setelah user register
+
+**Files:**
+- `quotations/views.py` - Add draft endpoints
+- `quotations/serializers.py` - Draft serializer
+- Frontend: RequestQuotePage.jsx (nanti, setelah backend ready)
+
+### Step 2.3 — Bug Fix: Auto-create Shipment
+**Issue:** `quotations/views.py` line 139-144 membuat Shipment tanpa `tenant`
+
+**Fix:**
+```python
+Shipment.objects.create(
+    tenant=quotation.request.tenant,  # ← ADD THIS
+    shipment_number=shipment_num,
+    quotation=quotation,
+    client=quotation.request.submitted_by,
+    status='BOOKED'
+)
+```
+
+**File:** `quotations/views.py` - QuotationViewSet.accept()
+
+### Step 2.4 — Verify Tenant Filtering di Semua Endpoints
+**Goal:** Pastikan semua API endpoint filter by tenant dengan benar
+
+**Checklist:**
+- [x] QuotationRequest - ✅ sudah filter by tenant
+- [x] Quotation - ✅ sudah filter by tenant
+- [x] Shipment - ✅ sudah filter by tenant
+- [x] Tariff - ✅ sudah filter by tenant
+- [ ] User management endpoints (jika ada)
+- [ ] Document upload endpoints
 
 ---
 
-## Prioritas 3: Fase 3 — Frontend Public Website
+## Prioritas 3: Fase 3 — Client Portal/Dashboard (NANTI)
 
-### Step 3.1 — Public tracking page
-- Halaman tracking shipment tanpa login
-- Input: shipment number → output: milestone timeline
+**Status:** ⏳ PENDING (tunggu backend selesai)
 
-### Step 3.2 — Public quotation form
-- Form request quotation tanpa login
-- Setelah submit → diminta register/login
-- Data form otomatis tersimpan
+**Catatan:** Public pages sudah cukup, JANGAN diubah dulu.
 
-### Step 3.3 — Polish landing page
-- Animasi dan micro-interactions
-- Responsive design testing
-- SEO optimization
-
----
-
-## Prioritas 4: Fase 4 — Client Portal
-
-### Step 4.1 — Login & Register pages (sudah ada basic)
-### Step 4.2 — Client Dashboard
-### Step 4.3 — Quotation management UI
-### Step 4.4 — Shipment tracking UI
-### Step 4.5 — Document management UI
+### Future Tasks:
+- Client Dashboard UI
+- Quotation management UI
+- Shipment tracking UI
+- Document management UI
+- Public tracking page (tanpa login)
 
 ---
 
