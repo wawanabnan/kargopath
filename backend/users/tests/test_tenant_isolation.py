@@ -9,11 +9,12 @@ This module tests that:
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework import status
 
 from users.models import Tenant
-from quotations.models import QuotationRequest
+from quotations.models import QuotationRequest, Quotation
 from shipments.models import Shipment
 from tariffs.models import Tariff
 
@@ -44,22 +45,51 @@ class TenantIsolationTestCase(TestCase):
             email='user1@tenant1.com',
             password='testpass123',
             tenant=self.tenant1,
-            role='STAFF',
+            role='ADMIN',
         )
         self.user2 = User.objects.create_user(
             email='user2@tenant2.com',
             password='testpass123',
             tenant=self.tenant2,
-            role='STAFF',
+            role='ADMIN',
         )
 
         # Create API clients
         self.client1 = APIClient()
         self.client2 = APIClient()
 
+    def create_quotation(self, tenant, user, reference_suffix):
+        """Create a minimal quotation for shipment test fixtures."""
+        request = QuotationRequest.objects.create(
+            tenant=tenant,
+            submitted_by=user,
+            mode='SEA',
+            scope='P2P',
+            status='QUOTED',
+        )
+        return Quotation.objects.create(
+            tenant=tenant,
+            quotation_number=f'Q-TEST-{reference_suffix}',
+            request=request,
+            created_by=user,
+            status='SENT',
+        )
+
+    def create_shipment(self, tenant, user, suffix, status='BOOKED'):
+        """Create a minimal shipment with required quotation relation."""
+        quotation = self.create_quotation(tenant, user, suffix)
+        return Shipment.objects.create(
+            tenant=tenant,
+            shipment_number=f'SHP-TEST-{suffix}',
+            quotation=quotation,
+            client=user,
+            status=status,
+        )
+
     def test_tenant_model_creation(self):
         """Test that tenants are created correctly."""
-        self.assertEqual(Tenant.objects.count(), 2)
+        # Migration creates one default tenant, then setUp creates two test tenants.
+        self.assertEqual(Tenant.objects.count(), 3)
         self.assertEqual(self.tenant1.name, 'Tenant 1')
         self.assertEqual(self.tenant2.name, 'Tenant 2')
 
@@ -99,16 +129,8 @@ class TenantIsolationTestCase(TestCase):
     def test_shipment_isolation(self):
         """Test that shipments are isolated by tenant."""
         # Create shipments for each tenant
-        shipment1 = Shipment.objects.create(
-            tenant=self.tenant1,
-            client=self.user1,
-            status='PENDING',
-        )
-        shipment2 = Shipment.objects.create(
-            tenant=self.tenant2,
-            client=self.user2,
-            status='IN_TRANSIT',
-        )
+        shipment1 = self.create_shipment(self.tenant1, self.user1, '001', 'BOOKED')
+        shipment2 = self.create_shipment(self.tenant2, self.user2, '002', 'IN_TRANSIT')
 
         # Verify tenant1 can only see their own shipments
         tenant1_shipments = Shipment.objects.filter(tenant=self.tenant1)
@@ -133,6 +155,7 @@ class TenantIsolationTestCase(TestCase):
             destination_name='Singapore',
             rate=1000.00,
             currency='USD',
+            valid_from=timezone.now().date(),
             created_by=self.user1,
         )
         tariff2 = Tariff.objects.create(
@@ -147,6 +170,7 @@ class TenantIsolationTestCase(TestCase):
             destination_address='Test St 456',
             rate=2000.00,
             currency='USD',
+            valid_from=timezone.now().date(),
             created_by=self.user2,
         )
 
@@ -182,7 +206,7 @@ class TenantIsolationTestCase(TestCase):
         self.client1.force_authenticate(user=self.user1)
 
         # Get quotation requests via API
-        response = self.client1.get('/api/quotations/requests/')
+        response = self.client1.get('/api/v1/quotations/requests/')
 
         # Verify user1 can only see their tenant's quotation requests
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -192,22 +216,14 @@ class TenantIsolationTestCase(TestCase):
     def test_api_shipment_filtering(self):
         """Test that API endpoints filter shipments by tenant."""
         # Create shipments for each tenant
-        shipment1 = Shipment.objects.create(
-            tenant=self.tenant1,
-            client=self.user1,
-            status='PENDING',
-        )
-        shipment2 = Shipment.objects.create(
-            tenant=self.tenant2,
-            client=self.user2,
-            status='IN_TRANSIT',
-        )
+        shipment1 = self.create_shipment(self.tenant1, self.user1, 'API-001', 'BOOKED')
+        shipment2 = self.create_shipment(self.tenant2, self.user2, 'API-002', 'IN_TRANSIT')
 
         # Authenticate as user1
         self.client1.force_authenticate(user=self.user1)
 
         # Get shipments via API
-        response = self.client1.get('/api/shipments/')
+        response = self.client1.get('/api/v1/shipments/')
 
         # Verify user1 can only see their tenant's shipments
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -227,6 +243,7 @@ class TenantIsolationTestCase(TestCase):
             destination_name='Singapore',
             rate=1000.00,
             currency='USD',
+            valid_from=timezone.now().date(),
             created_by=self.user1,
         )
         tariff2 = Tariff.objects.create(
@@ -241,6 +258,7 @@ class TenantIsolationTestCase(TestCase):
             destination_address='Test St 456',
             rate=2000.00,
             currency='USD',
+            valid_from=timezone.now().date(),
             created_by=self.user2,
         )
 
@@ -248,7 +266,7 @@ class TenantIsolationTestCase(TestCase):
         self.client1.force_authenticate(user=self.user1)
 
         # Get tariffs via API
-        response = self.client1.get('/api/tariffs/')
+        response = self.client1.get('/api/v1/tariffs/')
 
         # Verify user1 can only see their tenant's tariffs
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -270,7 +288,7 @@ class TenantIsolationTestCase(TestCase):
         self.client2.force_authenticate(user=self.user2)
 
         # Try to access tenant1's quotation request
-        response = self.client2.get(f'/api/quotations/requests/{qr1.id}/')
+        response = self.client2.get(f'/api/v1/quotations/requests/{qr1.id}/')
 
         # Verify access is denied (404 because it's filtered out)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

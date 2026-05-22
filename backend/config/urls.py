@@ -14,4 +14,5 @@ urlpatterns = [
     # App
     path('api/v1/', include('quotations.urls')),
     path('api/v1/shipments/', include('shipments.urls')),
+    path('api/v1/tariffs/', include('tariffs.urls')),
 ]
