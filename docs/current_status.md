@@ -1,0 +1,105 @@
+# KargoPath — Current Status
+
+> **Last Updated:** 2026-05-22 11:22 WIB
+> **Updated By:** AI Assistant (Antigravity)
+> **Cara Pakai:** Jika chat terputus, minta AI baca file ini + `next_steps.md` + `decision_log.md` untuk melanjutkan.
+
+---
+
+## Fase Saat Ini
+
+**Fase 1: Multi-Tenant Foundation** — 95% selesai
+
+---
+
+## Yang Sudah Selesai
+
+### Backend — Models & Migrations
+- [x] Model `Tenant` dibuat di `users/models.py`
+- [x] `User.tenant` FK ditambahkan
+- [x] `QuotationRequest.tenant` FK ditambahkan
+- [x] `Quotation.tenant` FK ditambahkan
+- [x] `QuotationItem.tenant` FK ditambahkan
+- [x] `QuotationRequestCargoItem.tenant` FK ditambahkan
+- [x] `Shipment.tenant` FK ditambahkan
+- [x] `ShipmentMilestone.tenant` FK ditambahkan
+- [x] `ShipmentDocument.tenant` FK ditambahkan
+- [x] `Tariff.tenant` FK ditambahkan (di model, tapi migration belum dibuat)
+- [x] Migration `users/0003_tenant_user_tenant.py` dibuat & dijalankan
+- [x] Migration `quotations/0004_...` dibuat & dijalankan
+- [x] Migration `shipments/0002_...` dibuat & dijalankan
+- [ ] ⚠️ Migration untuk `tariffs` BELUM DIBUAT
+
+### Backend — API Layer
+- [x] `quotations/views.py` — semua ViewSet filter by tenant
+- [x] `shipments/views.py` — ShipmentViewSet filter by tenant
+- [x] `tariffs/views.py` — TariffViewSet filter by tenant
+- [x] `quotations/serializers.py` — auto-set tenant on create
+- [x] `tariffs/serializers.py` — auto-set tenant on create
+- [x] `shipments/serializers.py` — auto-set tenant on create
+
+### Backend — Middleware & Admin
+- [x] `users/middleware.py` — TenantMiddleware dibuat
+- [x] `config/settings.py` — middleware didaftarkan (line 62)
+- [x] `users/admin.py` — tenant-aware
+- [x] `quotations/admin.py` — tenant-aware
+- [x] `shipments/admin.py` — tenant-aware
+- [x] `tariffs/admin.py` — tenant-aware
+
+### Backend — Testing
+- [x] `users/tests/test_tenant_isolation.py` dibuat (9 test cases, 277 baris)
+- [ ] ⚠️ Hanya 3/9 test PASS, sisanya error karena:
+  - Missing tariffs migration
+  - Shipment test missing required fields
+  - Default tenant menyebabkan count assertion gagal
+  - API endpoint routing 404
+
+### Frontend
+- [x] Landing page B2B-focused dengan proper 3PL terminology
+- [x] `Footer.jsx` component baru
+- [x] `AboutPage.jsx` halaman baru
+- [x] `FAQPage.jsx` halaman baru
+- [x] ServicesPage dengan struktur 3PL
+
+### Documentation
+- [x] `PRD.md` diupdate dengan arsitektur multi-tenant
+- [x] `DEVELOPMENT_RULES.md` dibuat
+- [x] `docs/implementation_plan_multi_tenant.md` dibuat (577 baris)
+
+### Git
+- [x] Semua kode di-commit (5 commits total di main)
+- [x] Semua commits di-push ke origin/main
+- [x] Commit terakhir: `adc6c5d` — docs update
+
+---
+
+## Issues Aktif
+
+### Issue #1: Missing Tariffs Migration
+- **File:** `tariffs/models.py` sudah punya `tenant` FK (line 41-46)
+- **Problem:** Migration file belum ada
+- **Fix:** `py -3 manage.py makemigrations tariffs && py -3 manage.py migrate`
+
+### Issue #2: Test Shipment Missing Fields
+- **File:** `users/tests/test_tenant_isolation.py` line 102-111
+- **Problem:** `Shipment.objects.create()` tidak menyertakan `quotation` (NOT NULL)
+- **Fix:** Buat quotation dummy di test, atau buat Shipment lebih lengkap
+
+### Issue #3: Tenant Count Assertion
+- **File:** `users/tests/test_tenant_isolation.py` line 62
+- **Problem:** Test harapkan 2 tenant, tapi migration buat default tenant jadi total 3
+- **Fix:** Ubah assertion atau gunakan `Tenant.objects.exclude(slug='kargopath-logistic')`
+
+### Issue #4: API Endpoint 404
+- **File:** `users/tests/test_tenant_isolation.py` line 185-188
+- **Problem:** `GET /api/quotations/requests/` return 404
+- **Fix:** Cek `config/urls.py` apakah routing sudah benar
+
+---
+
+## Tech Stack Aktif
+- **Backend:** Django 5.2.6 + DRF + SimpleJWT
+- **Frontend:** React (Vite)
+- **Database:** SQLite (dev), PostgreSQL (production plan)
+- **Python:** 3.13 (command: `py -3`)
+- **Auth:** JWT via `rest_framework_simplejwt`
