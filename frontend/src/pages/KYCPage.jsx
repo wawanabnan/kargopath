@@ -1,360 +1,311 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { kycAPI } from '../api';
 import {
-  CheckCircle2, AlertCircle, ArrowLeft, ArrowRight,
-  User, Phone, MapPin, FileText, Building2, Shield,
+  CheckCircle2, AlertCircle, Phone, MapPin, FileText, Shield,
 } from 'lucide-react';
+import DashboardLayout from '../components/DashboardLayout';
 
-const inputClass = "w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400";
-const labelClass = "block text-sm font-bold text-slate-700 mb-2";
+const inputBase = "w-full pl-3 pr-3 py-2 bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors";
+const labelBase = "block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide";
 
 const KYC_LEVELS = [
-  { level: 1, label: 'Basic Account',    desc: 'Account created',              icon: '📋' },
-  { level: 2, label: 'Verified',         desc: 'Identity documents confirmed', icon: '✅' },
-  { level: 3, label: 'Trusted Partner',  desc: 'Approved by KargoPath team',   icon: '⭐' },
+  { level: 1, label: 'Basic',    desc: 'Account created' },
+  { level: 2, label: 'Verified', desc: 'Documents confirmed' },
+  { level: 3, label: 'Trusted',  desc: 'Approved by team' },
 ];
 
 export default function KYCPage() {
   const { user, refreshUser } = useAuth();
-  const navigate = useNavigate();
 
-  const [kycData, setKycData]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [saved, setSaved]       = useState(false);
-  const [error, setError]       = useState('');
+  const [kycData, setKycData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
+  const [error, setError]     = useState('');
 
   const [form, setForm] = useState({
-    phone:      '',
-    whatsapp:   '',
-    address:    '',
-    city:       '',
-    postal_code:'',
-    country:    'Indonesia',
-    id_type:    'ktp',
-    id_number:  '',
-    npwp:       '',
-    nib_siup:   '',
-    company_email: '',
-    position:   '',
+    phone: '', whatsapp: '', address: '', city: '',
+    postal_code: '', country: 'Indonesia',
+    id_type: 'ktp', id_number: '',
+    npwp: '', nib_siup: '', company_email: '', position: '',
   });
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
   useEffect(() => {
     kycAPI.getProfile()
-      .then(data => {
-        setKycData(data);
-        setForm(prev => ({ ...prev, ...data }));
-      })
+      .then(data => { setKycData(data); setForm(prev => ({ ...prev, ...data })); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setError('');
-    setSaving(true);
+    setError(''); setSaving(true);
     try {
-      const res = await kycAPI.updateProfile(form);
+      await kycAPI.updateProfile(form);
       setSaved(true);
       if (refreshUser) await refreshUser();
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      const msg = typeof err === 'object'
-        ? Object.values(err).flat().join(' | ')
-        : 'Failed to save. Please try again.';
-      setError(msg);
+      setError(typeof err === 'object' ? Object.values(err).flat().join(' | ') : 'Failed to save.');
     } finally {
       setSaving(false);
     }
   };
 
-  const isIndividual  = user?.client_type === 'individual';
-  const isCorporate   = user?.client_type === 'corporate';
-  const currentLevel  = user?.kyc_level || 1;
-  const canBook       = user?.can_accept_booking;
+  const isPersonalBusiness = user?.client_type === 'personal_business';
+  const isCompany          = user?.client_type === 'company';
+  const currentLevel       = user?.kyc_level || 1;
+  const canBook            = user?.can_accept_booking;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+  // Required fields checklist based on client type
+  const requiredFields = [
+    { label: 'Phone number',  done: !!kycData?.phone },
+    { label: 'Full address',  done: !!kycData?.address },
+    ...(isPersonalBusiness
+      ? [{ label: 'ID number (KTP/Passport)', done: !!kycData?.id_number }]
+      : [
+          { label: 'NPWP',       done: !!kycData?.npwp },
+          { label: 'NIB / SIUP', done: !!kycData?.nib_siup },
+        ]
+    ),
+  ];
+
+  if (loading) return (
+    <DashboardLayout title="Identity Verification">
+      <div className="flex items-center justify-center py-20">
+        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+        <span className="text-xs text-slate-500">Loading...</span>
       </div>
-    );
-  }
+    </DashboardLayout>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      {/* Top bar */}
-      <div className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <span className="font-extrabold text-slate-900">Identity Verification</span>
+    <DashboardLayout title="Identity Verification">
+      <div className="grid lg:grid-cols-3 gap-5">
+
+        {/* ── Left: Status panel ── */}
+        <div className="space-y-4">
+          {/* KYC level badge */}
+          <div className={`p-4 border ${canBook ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className={`w-4 h-4 ${canBook ? 'text-green-600' : 'text-amber-600'}`} />
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">KYC Status</p>
+            </div>
+            <p className={`text-sm font-bold ${canBook ? 'text-green-700' : 'text-amber-700'}`}>
+              Level {currentLevel} — {currentLevel === 1 ? 'Basic' : currentLevel === 2 ? 'Verified' : 'Trusted'}
+            </p>
+            <p className={`text-xs mt-1 ${canBook ? 'text-green-600' : 'text-amber-600'}`}>
+              {canBook
+                ? '✓ You can accept quotations and confirm bookings.'
+                : 'Complete the form below to unlock booking.'}
+            </p>
           </div>
-          <Link to="/dashboard" className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors">
-            Dashboard
-          </Link>
-        </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="grid md:grid-cols-3 gap-8">
-
-          {/* ── LEFT: Status Panel ─────────────────────────────────────── */}
-          <div className="space-y-5">
-            {/* KYC Level Badge */}
-            <div className={`rounded-2xl p-6 border ${
-              canBook ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'
-            }`}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
-                  canBook ? 'bg-green-100' : 'bg-amber-100'
-                }`}>
-                  {canBook ? '✅' : '🔒'}
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">KYC Status</p>
-                  <p className={`font-extrabold text-lg ${canBook ? 'text-green-700' : 'text-amber-700'}`}>
-                    Level {currentLevel} — {user?.get_kyc_level_display || (currentLevel === 1 ? 'Basic' : currentLevel === 2 ? 'Verified' : 'Trusted')}
-                  </p>
-                </div>
-              </div>
-              {canBook ? (
-                <p className="text-sm text-green-700 font-medium">
-                  ✅ You can accept quotations and confirm shipment bookings.
-                </p>
-              ) : (
-                <p className="text-sm text-amber-700 font-medium">
-                  Complete the form to unlock booking capabilities.
-                </p>
-              )}
-            </div>
-
-            {/* Level Roadmap */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Verification Levels</p>
-              <div className="space-y-4">
-                {KYC_LEVELS.map((lvl, i) => {
-                  const done   = currentLevel >= lvl.level;
-                  const active = currentLevel === lvl.level;
-                  return (
-                    <div key={lvl.level} className="flex items-start gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 border-2 ${
-                        done ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-400'
-                      }`}>
-                        {done ? <CheckCircle2 className="w-5 h-5" /> : lvl.icon}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-bold ${done ? 'text-slate-900' : 'text-slate-400'}`}>{lvl.label}</p>
-                        <p className={`text-xs font-medium ${done ? 'text-slate-500' : 'text-slate-300'}`}>{lvl.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* What's required */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Required for Level 2</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Phone number', done: !!kycData?.phone },
-                  { label: 'Full address',  done: !!kycData?.address },
-                  ...(isIndividual
-                    ? [{ label: 'ID number (KTP/Passport)', done: !!kycData?.id_number }]
-                    : [
-                        { label: 'NPWP', done: !!kycData?.npwp },
-                        { label: 'NIB / SIUP', done: !!kycData?.nib_siup },
-                      ]
-                  ),
-                ].map(({ label, done }) => (
-                  <div key={label} className="flex items-center gap-2.5">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      done ? 'bg-green-100' : 'bg-slate-100'
+          {/* Level roadmap */}
+          <div className="bg-white border border-slate-200 p-4">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Verification Levels</p>
+            <div className="space-y-3">
+              {KYC_LEVELS.map(lvl => {
+                const done = currentLevel >= lvl.level;
+                return (
+                  <div key={lvl.level} className="flex items-center gap-3">
+                    <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0 text-xs font-bold border ${
+                      done ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 text-slate-400'
                     }`}>
-                      {done
-                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                        : <div className="w-2 h-2 rounded-full bg-slate-300" />}
+                      {done ? <CheckCircle2 className="w-3 h-3" /> : lvl.level}
                     </div>
-                    <span className={`text-sm font-medium ${done ? 'text-slate-700 line-through' : 'text-slate-600'}`}>{label}</span>
+                    <div>
+                      <p className={`text-xs font-semibold ${done ? 'text-slate-800' : 'text-slate-400'}`}>{lvl.label}</p>
+                      <p className={`text-xs ${done ? 'text-slate-500' : 'text-slate-300'}`}>{lvl.desc}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* ── RIGHT: Form ────────────────────────────────────────────── */}
-          <div className="md:col-span-2">
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100">
-                <h1 className="text-xl font-extrabold text-slate-900">Complete Your Profile</h1>
-                <p className="text-sm text-slate-500 font-medium mt-1">
-                  Fill in the required fields below to reach <strong>Verified (Level 2)</strong> status.
-                </p>
+          {/* Required fields checklist */}
+          <div className="bg-white border border-slate-200 p-4">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Required for Level 2</p>
+            <div className="space-y-2">
+              {requiredFields.map(({ label, done }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 ${done ? 'text-green-500' : 'text-slate-300'}`}>
+                    {done ? <CheckCircle2 className="w-4 h-4" /> : <div className="w-2 h-2 border border-slate-300" />}
+                  </div>
+                  <span className={`text-xs ${done ? 'text-slate-500 line-through' : 'text-slate-700'}`}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right: Form ── */}
+        <div className="lg:col-span-2">
+          <div className="bg-white border border-slate-200">
+            <div className="px-5 py-4 border-b border-slate-200">
+              <h2 className="text-sm font-bold text-slate-900">Complete Your Profile</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Fill in the required fields to reach <strong>Verified (Level 2)</strong> status.
+              </p>
+            </div>
+
+            {error && (
+              <div className="flex items-start gap-2 px-5 py-3 bg-red-50 border-b border-red-200 text-red-700 text-xs">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" /> {error}
               </div>
+            )}
+            {saved && (
+              <div className="flex items-center gap-2 px-5 py-3 bg-green-50 border-b border-green-200 text-green-700 text-xs">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Profile saved successfully.
+              </div>
+            )}
 
-              {error && (
-                <div className="flex items-start gap-3 p-4 bg-red-50 border-b border-red-100 text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm font-medium">{error}</p>
-                </div>
-              )}
+            <form onSubmit={handleSave} className="p-5 space-y-5">
 
-              {saved && (
-                <div className="flex items-center gap-3 p-4 bg-green-50 border-b border-green-100 text-green-700">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <p className="text-sm font-bold">Profile saved successfully!</p>
-                </div>
-              )}
-
-              <form onSubmit={handleSave} className="p-6 space-y-8">
-
-                {/* Contact */}
-                <div>
-                  <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
-                    <Phone className="w-4 h-4 text-blue-600" /> Contact Information
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>Phone Number *</label>
-                      <input required type="tel" value={form.phone} onChange={set('phone')}
-                        placeholder="+62 812 3456 7890" className={inputClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>WhatsApp <span className="font-normal text-slate-400">(if different)</span></label>
-                      <input type="tel" value={form.whatsapp} onChange={set('whatsapp')}
-                        placeholder="+62 812 3456 7890" className={inputClass} />
-                    </div>
-                    {!isIndividual && (
-                      <>
-                        <div>
-                          <label className={labelClass}>Position / Title</label>
-                          <input type="text" value={form.position} onChange={set('position')}
-                            placeholder="e.g. Logistics Manager" className={inputClass} />
-                        </div>
-                        <div>
-                          <label className={labelClass}>Company Email <span className="font-normal text-slate-400">(official)</span></label>
-                          <input type="email" value={form.company_email} onChange={set('company_email')}
-                            placeholder="you@company.com" className={inputClass} />
-                        </div>
-                      </>
+              {/* Contact */}
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" /> Contact
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelBase}>
+                      {isCompany ? 'Office Phone *' : 'Phone / WhatsApp *'}
+                    </label>
+                    <input required type="tel" value={form.phone} onChange={set('phone')}
+                      placeholder={isCompany ? '+62 21 1234 5678' : '+62 812 3456 7890'}
+                      className={inputBase} />
+                    {isCompany && (
+                      <p className="text-xs text-slate-400 mt-1">Office number. WhatsApp available once shipment is active.</p>
                     )}
                   </div>
-                </div>
-
-                {/* Address */}
-                <div>
-                  <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
-                    <MapPin className="w-4 h-4 text-blue-600" /> Address
-                  </h3>
-                  <div className="space-y-4">
+                  {isPersonalBusiness && (
                     <div>
-                      <label className={labelClass}>Full Address *</label>
-                      <textarea required value={form.address} onChange={set('address')}
-                        placeholder="Street name, building / unit number..."
-                        className={inputClass + " h-20 resize-none"} />
+                      <label className={labelBase}>WhatsApp <span className="font-normal text-slate-400">(if different)</span></label>
+                      <input type="tel" value={form.whatsapp} onChange={set('whatsapp')}
+                        placeholder="+62 812 3456 7890" className={inputBase} />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-1">
-                        <label className={labelClass}>City *</label>
-                        <input required type="text" value={form.city} onChange={set('city')}
-                          placeholder="Jakarta" className={inputClass} />
+                  )}
+                  {isCompany && (
+                    <>
+                      <div>
+                        <label className={labelBase}>Position / Title</label>
+                        <input type="text" value={form.position} onChange={set('position')}
+                          placeholder="e.g. Logistics Manager" className={inputBase} />
                       </div>
                       <div>
-                        <label className={labelClass}>Postal Code</label>
-                        <input type="text" value={form.postal_code} onChange={set('postal_code')}
-                          placeholder="12190" className={inputClass} />
+                        <label className={labelBase}>Company Email</label>
+                        <input type="email" value={form.company_email} onChange={set('company_email')}
+                          placeholder="you@company.com" className={inputBase} />
                       </div>
-                      <div>
-                        <label className={labelClass}>Country</label>
-                        <input type="text" value={form.country} onChange={set('country')}
-                          placeholder="Indonesia" className={inputClass} />
-                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Address */}
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Address
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelBase}>Full Address *</label>
+                    <textarea required value={form.address} onChange={set('address')}
+                      placeholder="Street name, building / unit number..."
+                      className={inputBase + " h-16 resize-none"} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-1">
+                      <label className={labelBase}>City *</label>
+                      <input required type="text" value={form.city} onChange={set('city')}
+                        placeholder="Jakarta" className={inputBase} />
+                    </div>
+                    <div>
+                      <label className={labelBase}>Postal Code</label>
+                      <input type="text" value={form.postal_code} onChange={set('postal_code')}
+                        placeholder="12190" className={inputBase} />
+                    </div>
+                    <div>
+                      <label className={labelBase}>Country</label>
+                      <input type="text" value={form.country} onChange={set('country')}
+                        placeholder="Indonesia" className={inputBase} />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Identity */}
-                <div>
-                  <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    {isIndividual ? 'Identity Document' : 'Business Documents'}
-                  </h3>
-
-                  {isIndividual ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className={labelClass}>ID Type *</label>
-                        <select value={form.id_type} onChange={set('id_type')} className={inputClass + " cursor-pointer"}>
-                          <option value="ktp">KTP (Indonesia)</option>
-                          <option value="passport">Passport</option>
-                          <option value="other">Other Government ID</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelClass}>ID Number *</label>
-                        <input required type="text" value={form.id_number} onChange={set('id_number')}
-                          placeholder="16-digit KTP number" className={inputClass} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className={labelClass}>NPWP *</label>
-                          <input required type="text" value={form.npwp} onChange={set('npwp')}
-                            placeholder="XX.XXX.XXX.X-XXX.XXX" className={inputClass} />
-                        </div>
-                        <div>
-                          <label className={labelClass}>NIB / SIUP *</label>
-                          <input required type="text" value={form.nib_siup} onChange={set('nib_siup')}
-                            placeholder="NIB number" className={inputClass} />
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
-                        <span className="text-slate-400 text-lg mt-0.5">📎</span>
-                        <div>
-                          <p className="text-sm font-bold text-slate-700">Document Upload</p>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            Supporting documents (NPWP scan, NIB, Akta Perusahaan) can be sent via email to{' '}
-                            <a href="mailto:verify@kargopath.com" className="text-blue-600 font-bold">verify@kargopath.com</a>{' '}
-                            or uploaded via the file upload feature (coming soon).
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit */}
-                <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                  <button type="submit" disabled={saving}
-                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                    {saving
-                      ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
-                      : <><Shield className="w-5 h-5" /> Save & Verify Profile</>}
-                  </button>
-                  <Link to="/dashboard"
-                    className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-center text-sm">
-                    Do it Later
-                  </Link>
-                </div>
-
-                <p className="text-xs text-slate-400 text-center">
-                  Your data is encrypted and used solely for logistics verification purposes.
+              {/* Identity / Business docs */}
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  {isPersonalBusiness ? 'Identity Document' : 'Business Documents'}
                 </p>
-              </form>
-            </div>
+
+                {isPersonalBusiness ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelBase}>ID Type *</label>
+                      <select value={form.id_type} onChange={set('id_type')} className={inputBase + " cursor-pointer"}>
+                        <option value="ktp">KTP (Indonesia)</option>
+                        <option value="passport">Passport</option>
+                        <option value="other">Other Government ID</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelBase}>ID Number *</label>
+                      <input required type="text" value={form.id_number} onChange={set('id_number')}
+                        placeholder="16-digit KTP number" className={inputBase} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelBase}>NPWP *</label>
+                        <input required type="text" value={form.npwp} onChange={set('npwp')}
+                          placeholder="XX.XXX.XXX.X-XXX.XXX" className={inputBase} />
+                      </div>
+                      <div>
+                        <label className={labelBase}>NIB / SIUP *</label>
+                        <input required type="text" value={form.nib_siup} onChange={set('nib_siup')}
+                          placeholder="NIB number" className={inputBase} />
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                      <span className="flex-shrink-0">📎</span>
+                      <p>Supporting documents (NPWP scan, NIB, Akta) can be sent to{' '}
+                        <a href="mailto:verify@kargopath.com" className="text-blue-600 font-semibold">verify@kargopath.com</a>.
+                        File upload coming soon.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-2 border-t border-slate-200">
+                <button type="submit" disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold transition-colors">
+                  {saving
+                    ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+                    : <><Shield className="w-3.5 h-3.5" /> Save & Verify</>
+                  }
+                </button>
+                <Link to="/dashboard"
+                  className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-colors">
+                  Do it Later
+                </Link>
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
