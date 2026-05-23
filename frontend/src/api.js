@@ -173,6 +173,18 @@ export const quotationAPI = {
   }),
 };
 
+// ── Locations API (public, no auth) ──────────────────────────────────────────
+export const locationsAPI = {
+  ports: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/locations/ports/${qs ? '?' + qs : ''}`);
+  },
+  cities: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/locations/cities/${qs ? '?' + qs : ''}`);
+  },
+};
+
 // ── Shipments API ─────────────────────────────────────────────────────────────
 export const shipmentAPI = {
   list: (params = {}) => {

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'quotations',
     'shipments',
     'tariffs',
+    'locations',
 ]
 
 MIDDLEWARE = [
