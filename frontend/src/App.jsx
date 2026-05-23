@@ -23,7 +23,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import QuotationsListPage from './pages/QuotationsListPage';
 
 // Pages that render their own full-page layout (no shared Navbar)
-const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/shipments'];
+const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/profile'];
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
