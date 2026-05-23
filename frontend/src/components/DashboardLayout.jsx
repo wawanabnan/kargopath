@@ -96,18 +96,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
 
         {/* User info + collapse toggle */}
         <div className="px-2 py-3 border-t border-slate-800">
-          {!collapsed && (
-            <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
-              <div className="w-6 h-6 bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {getInitials(clientName)}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate leading-tight">{clientName}</p>
-                <p className="text-xs text-slate-500 leading-tight">{clientRole}</p>
-              </div>
-            </div>
-          )}
-          {/* Collapse toggle */}
+          {/* Collapse toggle only */}
           <button onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={`w-full flex items-center gap-3 px-2 py-2 text-xs text-slate-600 hover:bg-slate-800 hover:text-white transition-colors ${
               collapsed ? 'justify-center' : ''
