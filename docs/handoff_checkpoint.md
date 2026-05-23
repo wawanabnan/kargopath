@@ -35,51 +35,29 @@
 - [x] `RequestQuotePage` — pakai DashboardLayout kalau login, standalone kalau guest
 - [x] `EditProfilePage` — edit first/last name, read-only email/company
 - [x] `ChangePasswordPage` — current + new + confirm password, auto logout setelah berhasil
+- [x] `QuotationsListPage` — list semua quotation requests, filter + search
+- [x] `KYCPage` — updated sesuai 2 client types, pakai DashboardLayout
 
-### Backend — Yang Belum Ada (Perlu Dibuat)
-- [ ] `POST /api/v1/auth/change-password/` — endpoint untuk change password
-  - Butuh: `current_password`, `new_password`
-  - Validasi: cek current password benar, update password user
+### Backend
+- [x] `POST /api/v1/auth/change-password/` — endpoint change password ✅
 
 ---
 
 ## Yang Perlu Dikerjakan Berikutnya
 
-### Priority 1 — Backend: Change Password Endpoint
-File: `backend/users/views.py` dan `backend/users/urls.py`
-
-```python
-# views.py — tambah ChangePasswordView
-class ChangePasswordView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        current = request.data.get('current_password')
-        new_pw  = request.data.get('new_password')
-        if not request.user.check_password(current):
-            return Response({'current_password': ['Wrong password.']}, status=400)
-        if len(new_pw) < 8:
-            return Response({'new_password': ['Min 8 characters.']}, status=400)
-        request.user.set_password(new_pw)
-        request.user.save()
-        return Response({'detail': 'Password changed.'})
-
-# urls.py — tambah
-path('change-password/', ChangePasswordView.as_view(), name='change-password'),
-```
-
-### Priority 2 — Frontend: Quotations List Page
-- Route `/dashboard/quotations` saat ini redirect ke `/dashboard`
-- Perlu buat `QuotationsListPage.jsx` yang list semua quotation requests
-- Mirip tabel di DashboardPage tapi lebih lengkap (filter, search, pagination)
-
-### Priority 3 — KYC / Verification Page
-- `KYCPage.jsx` sudah ada tapi belum diintegrasikan dengan baik
-- Perlu review dan update sesuai 2 client types baru (company vs personal_business)
-
-### Priority 4 — Public Tracking Page
+### Priority 1 — Public Tracking Page
 - Route `/tracking` sudah ada tapi belum diimplementasi
 - User bisa track shipment tanpa login dengan shipment number
+- Perlu endpoint backend: `GET /api/v1/shipments/track/?number=LP-2026-00001`
+
+### Priority 2 — Dashboard Quotations nav link
+- Sidebar nav "Quotations" sudah link ke `/dashboard/quotations` ✅
+- Tapi `DashboardPage` tabel "View all quotations" button belum link ke sana
+- Fix: ubah button jadi `<Link to="/dashboard/quotations">`
+
+### Priority 3 — Sales/Admin Panel (future)
+- Dashboard saat ini hanya untuk CLIENT role
+- ADMIN/SALES perlu panel berbeda untuk manage quotations, assign sales, dll
 
 ---
 
