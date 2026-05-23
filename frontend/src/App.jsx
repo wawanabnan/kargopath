@@ -18,6 +18,8 @@ import QuoteDetailPage  from './pages/QuoteDetailPage';
 import KYCPage          from './pages/KYCPage';
 import ShipmentsPage    from './pages/ShipmentsPage';
 import ShipmentDetailPage from './pages/ShipmentDetailPage';
+import EditProfilePage  from './pages/EditProfilePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 
 // Pages that render their own full-page layout (no shared Navbar)
 const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/shipments'];
@@ -72,6 +74,8 @@ function Layout() {
         <Route path="/dashboard/shipments/:id" element={<PrivateRoute><ShipmentDetailPage /></PrivateRoute>} />
         <Route path="/quote/detail/:id" element={<PrivateRoute><QuoteDetailPage /></PrivateRoute>} />
         <Route path="/profile/verify"   element={<PrivateRoute><KYCPage /></PrivateRoute>} />
+        <Route path="/profile/edit"     element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
+        <Route path="/profile/change-password" element={<PrivateRoute><ChangePasswordPage /></PrivateRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

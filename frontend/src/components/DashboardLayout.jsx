@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Package, FileText, Ship, LogOut, Bell,
   Menu, X, LayoutDashboard, PanelLeftClose, PanelLeftOpen,
+  User, KeyRound, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +28,19 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [userMenu, setUserMenu]   = useState(false);
+  const userMenuRef               = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const clientName = user
     ? (user.company?.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)
@@ -80,7 +94,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
           })}
         </nav>
 
-        {/* User + collapse toggle */}
+        {/* User info + collapse toggle */}
         <div className="px-2 py-3 border-t border-slate-800">
           {!collapsed && (
             <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
@@ -93,13 +107,6 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
               </div>
             </div>
           )}
-          <button onClick={logout} title="Sign Out"
-            className={`w-full flex items-center gap-3 px-2 py-2 text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-colors mb-1 ${
-              collapsed ? 'justify-center' : ''
-            }`}>
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && 'Sign Out'}
-          </button>
           {/* Collapse toggle */}
           <button onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={`w-full flex items-center gap-3 px-2 py-2 text-xs text-slate-600 hover:bg-slate-800 hover:text-white transition-colors ${
@@ -125,16 +132,67 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             <h1 className="text-sm font-bold text-slate-800">{title}</h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* Bell */}
             <button className="relative text-slate-400 hover:text-slate-600">
               <Bell className="w-4 h-4" />
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
             </button>
+
+            {/* New Quote */}
             <Link to="/quote"
-              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
+              className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
               + New Quote
             </Link>
-            <div className="lg:hidden w-6 h-6 bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-              {getInitials(clientName)}
+
+            {/* User dropdown */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenu(v => !v)}
+                className="flex items-center gap-2 pl-3 border-l border-slate-200 hover:bg-slate-50 pr-2 py-1 transition-colors">
+                <div className="w-6 h-6 bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {getInitials(clientName)}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-semibold text-slate-800 leading-tight max-w-[120px] truncate">{clientName}</p>
+                  <p className="text-xs text-slate-400 leading-tight">{clientRole}</p>
+                </div>
+                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${userMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown menu */}
+              {userMenu && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 shadow-lg z-50">
+                  {/* User info header */}
+                  <div className="px-3 py-2.5 border-b border-slate-100">
+                    <p className="text-xs font-bold text-slate-800 truncate">{clientName}</p>
+                    <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                  </div>
+
+                  {/* Menu items */}
+                  <div className="py-1">
+                    <Link to="/profile/edit"
+                      onClick={() => setUserMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      Edit Profile
+                    </Link>
+                    <Link to="/profile/change-password"
+                      onClick={() => setUserMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                      <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                      Change Password
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-slate-100 py-1">
+                    <button onClick={() => { setUserMenu(false); logout(); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
