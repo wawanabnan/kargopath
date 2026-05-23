@@ -1,6 +1,6 @@
 # Request Quotation Form — Redesign Plan
 
-> **Status:** ⏳ BELUM DIMULAI
+> **Status:** ✅ SELESAI — commit `6e5150e`
 > **Tujuan:** Redesign RequestQuotePage dengan style corporate (konsisten dengan dashboard) + integrasi master data location dari API
 
 ---
