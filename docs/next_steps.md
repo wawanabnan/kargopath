@@ -48,20 +48,19 @@ OK
 - `users/views.py` - CustomTokenObtainPairSerializer, RegisterView ✅
 - `users/serializers.py` - auto-assign default tenant on register ✅
 
-### Step 2.2 — Quotation Request Flow (Lead Generation)
+### Step 2.2 — Quotation Request Flow (Lead Generation) ✅ SELESAI
 **Goal:** Implement "draft quotation" untuk support lead generation strategy
 
 **Flow:**
 1. User isi form quotation (public, tanpa login)
-2. Form data disimpan sebagai "draft" (session/localStorage)
-3. Saat submit → redirect ke register/login
-4. Setelah register → draft otomatis tersimpan sebagai QuotationRequest
+2. `POST /api/v1/quotations/requests/save-draft/` → simpan ke Django session, return `draft_key`
+3. Saat submit → redirect ke register/login (frontend handle)
+4. Setelah register/login → `POST /api/v1/quotations/requests/submit-draft/` dengan `draft_key`
+5. Draft otomatis tersimpan sebagai `QuotationRequest`
 
-**Tasks:**
-- [ ] Design: Bagaimana simpan draft sebelum user register? (session? localStorage?)
-- [ ] API endpoint: `POST /api/v1/quotations/requests/draft/` (public access)
-- [ ] API endpoint: `POST /api/v1/quotations/requests/submit/` (authenticated)
-- [ ] Logic: Convert draft → QuotationRequest setelah user register
+**Files:**
+- `quotations/views.py` - `save_draft()` dan `submit_draft()` actions ✅
+- `config/settings.py` - tambah `SessionAuthentication` ✅
 
 **Files:**
 - `quotations/views.py` - Add draft endpoints
