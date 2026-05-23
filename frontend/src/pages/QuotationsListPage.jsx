@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowRight, Search, FileText } from 'lucide-react';
 import { quotationRequestAPI } from '../api';
+import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
 
 const STATUS_CONFIG = {
@@ -24,6 +25,9 @@ function StatusBadge({ status }) {
 const FILTERS = ['All', 'Pending', 'Quoted', 'Booked', 'Rejected'];
 
 export default function QuotationsListPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role && ['ADMIN', 'SALES', 'OPS'].includes(user.role);
+
   const [requests, setRequests]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [filter, setFilter]       = useState('All');
@@ -73,13 +77,17 @@ export default function QuotationsListPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">All Quotations</h2>
+          <h2 className="text-sm font-bold text-slate-900">
+            {isStaff ? 'All Quotation Requests' : 'All Quotations'}
+          </h2>
           <p className="text-xs text-slate-500 mt-0.5">{requests.length} total requests</p>
         </div>
-        <Link to="/quote"
-          className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
-          + New Quote
-        </Link>
+        {!isStaff && (
+          <Link to="/quote"
+            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
+            + New Quote
+          </Link>
+        )}
       </div>
 
       {loading ? (
@@ -135,11 +143,13 @@ export default function QuotationsListPage() {
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide whitespace-nowrap">Reference</th>
+                    {isStaff && <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Client</th>}
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Route</th>
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Commodity</th>
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide whitespace-nowrap">Mode</th>
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Price</th>
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Status</th>
+                    {isStaff && <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Sales</th>}
                     <th className="px-4 py-2.5 font-bold uppercase tracking-wide whitespace-nowrap">Date</th>
                     <th className="px-4 py-2.5"></th>
                   </tr>
@@ -154,10 +164,19 @@ export default function QuotationsListPage() {
                     const linkId   = hasQ ? req.quotation_details.id : req.id;
                     const linkType = hasQ ? 'quotation' : 'request';
                     const refLabel = hasQ ? req.quotation_details.quotation_number : req.reference_no;
+                    const needsAttention = isStaff && req.status === 'PENDING' && !req.sales_in_charge;
 
                     return (
-                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-2.5 font-semibold text-blue-600 whitespace-nowrap">{refLabel}</td>
+                      <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${needsAttention ? 'bg-amber-50/40' : ''}`}>
+                        <td className="px-4 py-2.5 font-semibold text-blue-600 whitespace-nowrap">
+                          {refLabel}
+                          {needsAttention && <span className="ml-1.5 text-[9px] font-bold text-amber-600 bg-amber-100 px-1 py-0.5">UNASSIGNED</span>}
+                        </td>
+                        {isStaff && (
+                          <td className="px-4 py-2.5 text-slate-600 max-w-[120px] truncate">
+                            {req.submitted_by_email || '—'}
+                          </td>
+                        )}
                         <td className="px-4 py-2.5 text-slate-700 min-w-[150px]">
                           <span className="font-medium">{route.origin}</span>
                           <span className="text-slate-400 mx-1">→</span>
@@ -167,6 +186,11 @@ export default function QuotationsListPage() {
                         <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap">{getModeLabel(req)}</td>
                         <td className="px-4 py-2.5 font-semibold text-slate-800 whitespace-nowrap">{price}</td>
                         <td className="px-4 py-2.5"><StatusBadge status={req.status} /></td>
+                        {isStaff && (
+                          <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">
+                            {req.sales_in_charge || <span className="text-amber-600 font-semibold">—</span>}
+                          </td>
+                        )}
                         <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">
                           {new Date(req.created_at).toLocaleDateString('en-GB', {
                             day: '2-digit', month: 'short', year: 'numeric',
@@ -183,7 +207,7 @@ export default function QuotationsListPage() {
                   })}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                      <td colSpan={isStaff ? 9 : 8} className="px-4 py-10 text-center text-slate-400">
                         {search ? `No results for "${search}"` : 'No quotations match this filter.'}
                       </td>
                     </tr>
