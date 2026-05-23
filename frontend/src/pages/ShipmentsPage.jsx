@@ -1,7 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { shipmentAPI } from '../api';
-import { Package, ArrowLeft, Loader2, ArrowRight } from 'lucide-react';
+import { Package, Loader2, ArrowRight } from 'lucide-react';
+import DashboardLayout from '../components/DashboardLayout';
+
+const STATUS_CONFIG = {
+  DELIVERED:     { label: 'Delivered',     cls: 'bg-green-50 text-green-700 border border-green-200' },
+  POD_CONFIRMED: { label: 'POD Confirmed', cls: 'bg-green-50 text-green-700 border border-green-200' },
+  IN_TRANSIT:    { label: 'In Transit',    cls: 'bg-blue-50 text-blue-700 border border-blue-200' },
+};
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_CONFIG[status] || { label: status.replace('_', ' '), cls: 'bg-amber-50 text-amber-700 border border-amber-200' };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold ${cfg.cls}`}>
+      {cfg.label}
+    </span>
+  );
+}
 
 export default function ShipmentsPage() {
   const [shipments, setShipments] = useState([]);
@@ -9,76 +25,60 @@ export default function ShipmentsPage() {
 
   useEffect(() => {
     shipmentAPI.list()
-      .then(data => setShipments(data))
+      .then(data => setShipments(data?.results ?? data ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-sans">
-      <div className="max-w-5xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <Link to="/dashboard" className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-blue-600 mb-2 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
-            </Link>
-            <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-              <Package className="w-8 h-8 text-blue-600" /> My Shipments
-            </h1>
-          </div>
+    <DashboardLayout title="Shipments">
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-5 h-5 text-blue-600 animate-spin mr-2" />
+          <span className="text-xs text-slate-500">Loading...</span>
         </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center p-12">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      ) : shipments.length === 0 ? (
+        <div className="bg-white border border-slate-200 p-12 text-center">
+          <div className="w-16 h-16 bg-slate-50 flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-slate-300" />
           </div>
-        ) : shipments.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-100">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Package className="w-10 h-10 text-slate-300" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No shipments yet</h3>
-            <p className="text-slate-500 font-medium mb-6">You don't have any active shipments at the moment.</p>
-            <Link to="/dashboard" className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors inline-block">
-              Request a Quotation
-            </Link>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">No shipments yet</h3>
+          <p className="text-xs text-slate-500 mb-6">You don't have any active shipments at the moment.</p>
+          <Link to="/quote" className="px-4 py-2 bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors inline-block">
+            Request a Quotation
+          </Link>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-200">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">My Shipments</h3>
           </div>
-        ) : (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Shipment No.</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date Created</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                  <th className="px-4 py-2.5 font-bold uppercase tracking-wide whitespace-nowrap">Shipment No.</th>
+                  <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Quotation Ref</th>
+                  <th className="px-4 py-2.5 font-bold uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-2.5 font-bold uppercase tracking-wide whitespace-nowrap">Date Created</th>
+                  <th className="px-4 py-2.5 font-bold uppercase tracking-wide text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {shipments.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4">
-                      <p className="font-extrabold text-slate-900">{s.shipment_number}</p>
-                      <p className="text-xs text-slate-500 font-medium mt-1">Ref: {s.quotation_details?.quotation_number}</p>
+                  <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-2.5 font-semibold text-slate-900 whitespace-nowrap">{s.shipment_number}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{s.quotation_details?.quotation_number || '—'}</td>
+                    <td className="px-4 py-2.5"><StatusBadge status={s.status} /></td>
+                    <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">
+                      {new Date(s.created_at).toLocaleDateString('en-GB', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                      })}
                     </td>
-                    <td className="p-4">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                        s.status === 'DELIVERED' || s.status === 'POD_CONFIRMED' ? 'bg-green-100 text-green-700' :
-                        s.status === 'IN_TRANSIT' ? 'bg-blue-100 text-blue-700' :
-                        'bg-amber-100 text-amber-700'
-                      }`}>
-                        {s.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm font-medium text-slate-600">{new Date(s.created_at).toLocaleDateString()}</p>
-                    </td>
-                    <td className="p-4 text-right">
-                      <Link to={`/dashboard/shipments/${s.id}`} className="inline-flex items-center justify-center p-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                        <ArrowRight className="w-5 h-5" />
+                    <td className="px-4 py-2.5 text-right">
+                      <Link to={`/dashboard/shipments/${s.id}`}
+                        className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:underline whitespace-nowrap">
+                        View <ArrowRight className="w-3 h-3" />
                       </Link>
                     </td>
                   </tr>
@@ -86,9 +86,8 @@ export default function ShipmentsPage() {
               </tbody>
             </table>
           </div>
-        )}
-
-      </div>
-    </div>
+        </div>
+      )}
+    </DashboardLayout>
   );
 }

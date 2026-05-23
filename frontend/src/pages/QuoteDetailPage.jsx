@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Package, ArrowLeft, MapPin, Anchor, CheckCircle2, FileText, FileDown, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
+import { Package, MapPin, Anchor, CheckCircle2, FileText, FileDown, MessageSquare, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { quotationAPI, quotationRequestAPI } from '../api';
+import DashboardLayout from '../components/DashboardLayout';
 
 export default function QuoteDetailPage() {
   const { id } = useParams();
@@ -89,23 +90,25 @@ export default function QuoteDetailPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-      <p className="text-slate-500 font-medium text-sm">Loading quotation details...</p>
-    </div>
+    <DashboardLayout title="Quotation Detail">
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-5 h-5 text-blue-600 animate-spin mr-2" />
+        <span className="text-xs text-slate-500">Loading quotation details...</span>
+      </div>
+    </DashboardLayout>
   );
 
   if (error || !data) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white shadow-xl p-8 text-center border border-slate-100 rounded-2xl">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">An Error Occurred</h2>
-        <p className="text-slate-500 text-sm mb-6 leading-relaxed">{error}</p>
-        <Link to="/dashboard" className="px-6 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 transition-colors inline-block">
+    <DashboardLayout title="Quotation Detail">
+      <div className="bg-white border border-slate-200 p-12 text-center max-w-md mx-auto mt-8">
+        <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+        <h2 className="text-sm font-bold text-slate-800 mb-2">An Error Occurred</h2>
+        <p className="text-slate-500 text-xs mb-6 leading-relaxed">{error}</p>
+        <Link to="/dashboard" className="px-4 py-2 bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors inline-block">
           Back to Dashboard
         </Link>
       </div>
-    </div>
+    </DashboardLayout>
   );
 
   // Extract variables depending on type
@@ -133,28 +136,21 @@ export default function QuoteDetailPage() {
       {/* ===================================================================== */}
       {/* WEB UI (Visible on screen, hidden on print) */}
       {/* ===================================================================== */}
-      <div className="min-h-screen bg-slate-50 font-sans pb-20 print:hidden">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-          <div className="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
-            <Link to="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors font-bold text-sm">
-              <ArrowLeft className="w-5 h-5" />
-              Back to Dashboard
-            </Link>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setChatOpen(true)} className="px-4 py-2 border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-xs">
-                <MessageSquare className="w-4 h-4" /> Contact Sales
+      <DashboardLayout title="Quotation Detail">
+        <div className="pb-10 print:hidden">
+          {/* Top action bar */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setChatOpen(true)} className="px-3 py-1.5 border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs">
+                <MessageSquare className="w-3.5 h-3.5" /> Contact Sales
               </button>
               {isQuotation && !isPending && (
-                <button onClick={() => window.print()} className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2 text-xs">
-                  <FileDown className="w-4 h-4" /> Print / Download PDF
+                <button onClick={() => window.print()} className="px-3 py-1.5 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs">
+                  <FileDown className="w-3.5 h-3.5" /> Print / Download PDF
                 </button>
               )}
             </div>
           </div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 mt-8">
           {/* Status Banner */}
           <div className={`rounded-2xl p-6 text-white mb-6 flex flex-col md:flex-row md:items-center justify-between shadow-xl ${
             isPending ? 'bg-amber-600 shadow-amber-600/10' :
@@ -536,7 +532,7 @@ export default function QuoteDetailPage() {
                 )}
               </div>
               
-              <div className="bg-slate-100/50 rounded-2xl p-5 border border-slate-200 text-center">
+              <div className="bg-slate-100/50 p-4 border border-slate-200 text-center">
                 <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
                   This quotation is subject to KargoPath Terms & Conditions. Actual charges may vary if real cargo dimensions or weight differ from provided information.
                 </p>
@@ -545,7 +541,7 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        {/* Live Chat Widget (Mocked but elegant) */}
+        {/* Live Chat Widget */}
         {chatOpen && (
           <div className="fixed bottom-6 right-6 w-80 md:w-[350px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] flex flex-col overflow-hidden animate-fade-in-up">
             <div className="bg-blue-600 p-4 text-white flex items-center justify-between">
@@ -605,7 +601,7 @@ export default function QuoteDetailPage() {
             </form>
           </div>
         )}
-      </div>
+      </DashboardLayout>
 
       {/* ===================================================================== */}
       {/* PRINT UI (Hidden on screen, visible on print) */}

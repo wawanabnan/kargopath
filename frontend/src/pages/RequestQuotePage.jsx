@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Package, ArrowLeft, ArrowRight, CheckCircle2, Anchor, Plane, Truck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { quotationRequestAPI } from '../api';
+import DashboardLayout from '../components/DashboardLayout';
 
 // ── Service Matrix Helper Logic ──────────────────────────────────────────────
 const needsPickup    = (scope) => scope.startsWith('d2');   // d2d, d2p
@@ -998,45 +999,42 @@ export default function RequestQuotePage() {
     }
   };
 
-  if (submitted) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white shadow-xl p-8 text-center border border-slate-100 rounded-lg">
-        <div className="w-20 h-20 bg-green-50 flex items-center justify-center mx-auto mb-6 rounded-full">
-          <CheckCircle2 className="w-10 h-10 text-green-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-3">Berhasil Dikirim!</h2>
-        <p className="text-slate-600 mb-8 leading-relaxed">
-          Permintaan penawaran Anda telah masuk ke sistem. Tim sales kami akan segera meninjau dan menghitung tarif terbaik untuk Anda.
-        </p>
-        <div className="space-y-3">
-          <Link to="/dashboard" className="flex items-center justify-center w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all rounded-md">
-            Masuk ke Portal & Lacak Penawaran
-          </Link>
-          <Link to="/" className="block w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all rounded-md">
-            Kembali ke Beranda
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20">
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          {step === 1
-            ? <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm"><ArrowLeft className="w-4 h-4" /> Beranda</Link>
-            : <button type="button" onClick={back} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm"><ArrowLeft className="w-4 h-4" /> Kembali</button>}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-slate-900 rounded-md flex items-center justify-center"><Package className="w-4 h-4 text-white" /></div>
-            <span className="font-extrabold tracking-tight text-slate-900 hidden sm:block">KargoPath</span>
+  if (submitted) {
+    const successContent = (
+      <div className="flex items-center justify-center py-10">
+        <div className="max-w-md w-full bg-white border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 bg-green-50 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Langkah {step} / 3</span>
+          <h2 className="text-lg font-bold text-slate-900 mb-3">Berhasil Dikirim!</h2>
+          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+            Permintaan penawaran Anda telah masuk ke sistem. Tim sales kami akan segera meninjau dan menghitung tarif terbaik untuk Anda.
+          </p>
+          <div className="space-y-3">
+            <Link to="/dashboard" className="flex items-center justify-center w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all text-sm">
+              Masuk ke Portal & Lacak Penawaran
+            </Link>
+            <Link to="/" className="block w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all text-sm">
+              Kembali ke Beranda
+            </Link>
+          </div>
         </div>
       </div>
+    );
+    if (user) {
+      return <DashboardLayout title="New Quote Request">{successContent}</DashboardLayout>;
+    }
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        {successContent}
+      </div>
+    );
+  }
 
-      <div className="max-w-3xl mx-auto px-4 mt-10">
-        {/* Progress bar */}
+  // ── Form content (shared between guest and logged-in) ──
+  const formContent = (
+    <div className="max-w-3xl mx-auto px-4 mt-10">
+      {/* Progress bar */}
         <div className="flex items-center justify-between mb-10 relative px-4 max-w-xs mx-auto">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 -z-10"></div>
           <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 -z-10 transition-all duration-500"
@@ -1484,6 +1482,32 @@ export default function RequestQuotePage() {
           </div>
         </form>
       </div>
+  );
+
+  // Conditional wrapper: DashboardLayout for logged-in users, standalone for guests
+  if (user) {
+    return (
+      <DashboardLayout title="New Quote Request">
+        {formContent}
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans pb-20">
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+          {step === 1
+            ? <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm"><ArrowLeft className="w-4 h-4" /> Beranda</Link>
+            : <button type="button" onClick={back} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm"><ArrowLeft className="w-4 h-4" /> Kembali</button>}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-900 flex items-center justify-center"><Package className="w-4 h-4 text-white" /></div>
+            <span className="font-extrabold tracking-tight text-slate-900 hidden sm:block">KargoPath</span>
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Langkah {step} / 3</span>
+        </div>
+      </div>
+      {formContent}
     </div>
   );
 }

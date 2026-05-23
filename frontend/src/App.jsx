@@ -67,6 +67,7 @@ function Layout() {
 
         {/* Protected */}
         <Route path="/dashboard"        element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+        <Route path="/dashboard/quotations" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
         <Route path="/dashboard/shipments" element={<PrivateRoute><ShipmentsPage /></PrivateRoute>} />
         <Route path="/dashboard/shipments/:id" element={<PrivateRoute><ShipmentDetailPage /></PrivateRoute>} />
         <Route path="/quote/detail/:id" element={<PrivateRoute><QuoteDetailPage /></PrivateRoute>} />
