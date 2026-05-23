@@ -1,111 +1,167 @@
 # KargoPath — Handoff Checkpoint
 
-> **Last Updated:** 2026-05-22 16:07 WIB
-> **Purpose:** Baca file ini dulu jika chat/proses terhenti. File ini adalah ringkasan cepat supaya AI/Human berikutnya bisa lanjut tanpa membaca semua dokumen dari nol.
+> **Last Updated:** 2026-05-23
+> **Purpose:** Baca file ini PERTAMA jika chat/proses terhenti. Ringkasan cepat agar AI/Human berikutnya bisa lanjut tanpa membaca semua dokumen dari nol.
 
 ---
 
 ## TL;DR Current State
 
-- Project: **KargoPath** logistics management app.
-- Current development focus: **Fase 2 — Backend API Refinement**.
-- **Fase 1 Multi-Tenant Foundation sudah selesai 100%**.
-- Tenant isolation tests terakhir: **9/9 PASSING**.
-- Latest documented commit: `0843354` — `fix: Complete multi-tenant foundation - all tests passing`.
-- Public frontend pages **jangan diubah dulu**; fokus backend.
+- Project: **KargoPath** — logistics management SaaS app untuk perusahaan 3PL
+- **Fase 1 (Multi-Tenant Foundation):** ✅ 100% selesai
+- **Fase 2 (Backend API Refinement):** ✅ 100% selesai
+- **Fase 3 (Frontend):** 🔄 IN PROGRESS
+- Latest commit: `394730a` — fix client_type choices in serializer
+- Backend berjalan di: `http://127.0.0.1:8000`
+- Frontend berjalan di: `http://localhost:5173`
 
 ---
 
-## What To Do Next
+## Yang Baru Saja Dikerjakan (Sesi Ini)
 
-Lanjutkan dari prioritas berikut:
+### Backend
+- JWT login/register sekarang return `user` + `tenant` + `access` + `refresh`
+- `RegisterView` langsung return token (tidak perlu login lagi setelah register)
+- `UserRegistrationSerializer.create()` auto-assign default tenant (id=1)
+- `CLIENT_TYPE_CHOICES` diubah dari 3 tipe menjadi 2:
+  - `company` = entitas bisnis formal (CV, PT, Corporate, BUMN)
+  - `personal_business` = perorangan potensial, perlu sales review
+- Migration `users/0004_update_client_type_choices.py` sudah diapply
+- `ShipmentMilestone` & `ShipmentDocument` auto-set tenant saat dibuat
+- `Shipment` model dapat `ordering = ['-created_at']`
+- Draft quotation flow: `save-draft/` (public) + `submit-draft/` (authenticated)
 
-1. **JWT dengan Tenant Context**
-   - Check/update `backend/users/views.py`.
-   - Check/update `backend/users/serializers.py` jika diperlukan.
-   - Login response harus return:
-     - `user`
-     - `tenant`
-     - `access`
-     - `refresh`
-   - JWT payload harus include `tenant_id`.
-
-2. **Bug Fix Auto-create Shipment**
-   - File: `backend/quotations/views.py`.
-   - Method: `QuotationViewSet.accept()`.
-   - Saat `Shipment.objects.create(...)`, wajib include:
-     ```python
-     tenant=quotation.request.tenant
-     ```
-
-3. **Verify Tenant Filtering Remaining Endpoints**
-   - User management endpoints jika ada.
-   - Document upload endpoints jika ada.
-
-4. **Quotation Request Lead Generation Flow**
-   - Public user bisa mulai isi quotation tanpa login.
-   - Saat submit diarahkan ke login/register.
-   - Setelah register/login, draft disimpan sebagai `QuotationRequest`.
-   - Belum perlu mulai UI sebelum backend siap.
+### Frontend
+- `AuthContext` — simpan `tenant` di state & localStorage, register tidak double-call
+- `api.js` — `saveAuth`/`clearAuth` handle tenant, tambah `saveDraft`/`submitDraft`
+- `DashboardPage` — handle paginated response `{results, count}`
+- `RegisterPage` — redesign corporate style, 2 tipe client, office phone untuk company
+- `index.css` — `overflow-x: hidden` di html/body (fix horizontal scroll)
 
 ---
 
-## Files Most Likely Needed Next
+## Yang Masih Perlu Diselesaikan
 
-- `backend/users/views.py`
-- `backend/users/serializers.py`
-- `backend/quotations/views.py`
-- `backend/quotations/serializers.py`
-- `backend/shipments/models.py`
-- `backend/users/tests/test_tenant_isolation.py`
-- `docs/current_status.md`
-- `docs/next_steps.md`
-- `docs/decision_log.md`
+### Bug Aktif
+- [ ] **Nama user hilang di dashboard** setelah register/login
+  - Root cause: `user` object dari register response tidak punya `company` field
+  - Fix sudah ditulis di `AuthContext.jsx` (login & register fetch profile setelah dapat token)
+  - **Perlu di-commit dan di-test**
+
+### Fase 3 — Frontend (Lanjutan)
+- [ ] Commit fix nama user di dashboard
+- [ ] `LoginPage` — sama seperti register, perlu fetch profile setelah login
+- [ ] `ShipmentsPage` — halaman list shipment
+- [ ] `ShipmentDetailPage` — detail shipment + milestones
+- [ ] `QuoteDetailPage` — detail quotation, tombol accept/reject
+- [ ] `KYCPage` — form verifikasi dokumen
+- [ ] Public tracking page (nanti)
 
 ---
 
-## Commands
+## Cara Lanjut Setelah Stuck
 
-Run from `D:\Developments\kargopath\backend` unless stated otherwise.
+### 1. Baca file ini dulu
+Sudah kamu lakukan ✓
 
+### 2. Cek git status
 ```powershell
-py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
-py -3 manage.py test
-py -3 manage.py runserver
-```
-
-Git checks from repo root:
-
-```powershell
-git status
+cd D:\Developments\kargopath
 git log --oneline -5
+git status
+```
+
+### 3. Jalankan server
+```powershell
+# Backend (dari folder backend)
+cd D:\Developments\kargopath\backend
+py -3 manage.py runserver
+
+# Frontend (dari folder frontend, terminal terpisah)
+cd D:\Developments\kargopath\frontend
+npm run dev
+```
+
+### 4. Jalankan test untuk verifikasi
+```powershell
+cd D:\Developments\kargopath\backend
+py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
+```
+Expected: `Ran 10 tests ... OK`
+
+### 5. Baca dokumen tambahan jika perlu
+- `docs/next_steps.md` — task list detail
+- `docs/decision_log.md` — semua keputusan arsitektur & produk
+- `docs/current_status.md` — status lengkap per komponen
+
+---
+
+## Test Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@kargopath.com` | `admin123456` | ADMIN (superuser) |
+| `admin@ptmaju.com` | *(password lama)* | CLIENT |
+
+---
+
+## Arsitektur Singkat
+
+```
+Frontend (React/Vite :5173)
+    ↓ JWT Bearer token
+Backend (Django/DRF :8000)
+    ↓ tenant_id isolation
+Database (SQLite dev / PostgreSQL prod)
+```
+
+**Multi-tenant:** shared DB, semua model punya FK ke `Tenant`.
+- `Tenant` = perusahaan 3PL yang pakai KargoPath
+- `Company` = client/customer dari tenant tersebut
+- `User.tenant` wajib, `User.company` opsional
+
+**Auth flow:**
+1. Register → backend return `{user, tenant, access, refresh}` langsung
+2. Login → sama, return `{user, tenant, access, refresh}`
+3. Frontend simpan ke localStorage, `AuthContext` expose via `useAuth()`
+
+**Draft quotation flow (lead generation):**
+1. Guest isi form → `POST /api/v1/quotations/requests/save-draft/` → dapat `draft_key`
+2. Frontend simpan `draft_key` di localStorage
+3. Guest register/login → `POST /api/v1/quotations/requests/submit-draft/` dengan `draft_key`
+4. Redirect ke dashboard dengan toast sukses
+
+---
+
+## File Paling Sering Diubah
+
+```
+backend/
+  users/models.py          — User, Tenant, Company, ClientProfile
+  users/serializers.py     — UserRegistrationSerializer, UserProfileSerializer
+  users/views.py           — RegisterView, CustomTokenObtainPairSerializer
+  quotations/views.py      — QuotationRequestViewSet (draft flow)
+  config/settings.py       — DRF settings, middleware
+
+frontend/src/
+  context/AuthContext.jsx  — login, register, logout, user/tenant state
+  api.js                   — semua API calls
+  pages/DashboardPage.jsx  — main client portal
+  pages/RegisterPage.jsx   — 3-step registration
+  pages/LoginPage.jsx      — login + auto-submit draft
 ```
 
 ---
 
-## Important Product / Architecture Decisions
+## Keputusan Penting yang Sudah Final
 
-- Multi-tenant strategy: shared DB with `tenant_id` isolation.
-- `Tenant` = 3PL/logistics operator using KargoPath.
-- `Company` = customer/client company of a tenant.
-- Superuser can see all tenants.
-- Normal users must only see their own tenant data.
-- Tariffs are tenant-specific.
-- `TenantMiddleware` is already registered after Django auth middleware.
-- KargoPath core app and future CMS are separate products.
-- SaaS mode is primary, but codebase should not block self-hosted use later.
+| # | Keputusan |
+|---|-----------|
+| D-001 | Multi-tenant: shared DB dengan tenant_id isolation |
+| D-002 | Tenant = 3PL operator, Company = client mereka |
+| D-003 | Default tenant: PT. Kargopath Logistic Nusantara (id=1) |
+| D-037 | 2 client types: `company` dan `personal_business` |
+| D-034 | Draft quotation flow untuk lead generation |
+| D-035 | Public pages jangan diubah dulu, fokus backend |
 
----
-
-## Recovery Instructions If Stuck Again
-
-1. Read this file first: `docs/handoff_checkpoint.md`.
-2. Then only read deeper docs if needed:
-   - `docs/next_steps.md` for detailed task list.
-   - `docs/decision_log.md` for architecture/product decisions.
-   - `docs/current_status.md` for completed work and latest known state.
-3. Before coding, check current git status and inspect the target files.
-4. After every meaningful change, update this handoff file with:
-   - What was changed.
-   - What passed/failed.
-   - Exact next step.
+Lihat `docs/decision_log.md` untuk detail lengkap.

@@ -102,7 +102,7 @@ export default function DashboardPage() {
   };
 
   const clientName = user
-    ? (user.company_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)
+    ? (user.company?.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)
     : 'KargoPath Client';
 
   const clientRole = user?.client_type

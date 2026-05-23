@@ -31,6 +31,12 @@ export function AuthProvider({ children }) {
     saveAuth({ access: data.access, refresh: data.refresh, user: data.user, tenant: data.tenant });
     setUser(data.user);
     setTenant(data.tenant);
+    // Fetch full profile to get company, profile, etc.
+    try {
+      const profile = await authAPI.getProfile();
+      setUser(profile);
+      localStorage.setItem('user', JSON.stringify(profile));
+    } catch {}
     return data.user;
   };
 
@@ -43,11 +49,16 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (formData) => {
-    // Backend now returns tokens directly on register — no need for a second login call
     const data = await authAPI.register(formData);
     saveAuth({ access: data.access, refresh: data.refresh, user: data.user, tenant: data.tenant });
     setUser(data.user);
     setTenant(data.tenant);
+    // Fetch full profile to get company, profile, etc.
+    try {
+      const profile = await authAPI.getProfile();
+      setUser(profile);
+      localStorage.setItem('user', JSON.stringify(profile));
+    } catch {}
     return data.user;
   };
 
