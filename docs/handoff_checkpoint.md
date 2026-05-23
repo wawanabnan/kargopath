@@ -78,6 +78,9 @@ npm run dev
 | Email | Password | Role |
 |-------|----------|------|
 | `admin@kargopath.com` | `admin123456` | ADMIN (superuser) |
+| `sales@kargopath.com` | `sales123456` | SALES |
+| `ops@kargopath.com`   | `ops123456`   | OPS |
+| `it@dakarsh.co.id`    | *(password lama)* | CLIENT |
 
 ## Jalankan Tests
 
