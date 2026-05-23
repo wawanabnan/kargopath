@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ArrowRight, ArrowLeft, AlertCircle, CheckCircle2, User, Building2, Briefcase, Mail, Lock, Phone } from 'lucide-react';
+import {
+  Package, ArrowRight, ArrowLeft, AlertCircle, CheckCircle2,
+  User, Building2, Briefcase, Mail, Lock, Phone,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { quotationRequestAPI } from '../api';
 
-// Free email domains — mirrors backend blocklist
 const FREE_DOMAINS = new Set([
   'gmail.com','yahoo.com','yahoo.co.id','hotmail.com','outlook.com',
   'live.com','icloud.com','protonmail.com','ymail.com','rocketmail.com',
@@ -14,62 +16,48 @@ const FREE_DOMAINS = new Set([
 const CLIENT_TYPES = [
   {
     id: 'company',
-    icon: <Building2 className="w-7 h-7" />,
+    icon: <Building2 className="w-5 h-5" />,
     label: 'Company',
     sub: 'CV, PT, Corporate, BUMN',
     desc: 'Registered business entity with formal company documents.',
     emailNote: 'Company email required (e.g. @yourcompany.com).',
-    color: 'blue',
   },
   {
     id: 'personal_business',
-    icon: <User className="w-7 h-7" />,
+    icon: <User className="w-5 h-5" />,
     label: 'Personal Business',
     sub: 'Freelancer, Trader, Reseller',
-    desc: 'No formal company entity, but active as a shipping client. Subject to sales review.',
-    emailNote: 'Personal email (Gmail, etc.) accepted.',
-    color: 'sky',
+    desc: 'No formal company entity but active as a shipping client. Subject to sales review.',
+    emailNote: 'Personal email accepted.',
   },
 ];
 
-const COLOR = {
-  sky:  { border: 'border-sky-500',  bg: 'bg-sky-50',  text: 'text-sky-700',  ring: 'ring-sky-200'  },
-  blue: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-200' },
-};
-
-const inputClass = "w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400";
+const inputBase = "w-full pl-9 pr-3 py-2 bg-white border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors";
+const labelBase = "block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide";
 
 function IconWrap({ children }) {
-  return <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{children}</div>;
+  return <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{children}</div>;
 }
+
+const STEPS = ['Account Type', 'Credentials', 'Profile'];
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate     = useNavigate();
 
-  const [step, setStep]     = useState(1);
-  const [error, setError]   = useState('');
+  const [step, setStep]       = useState(1);
+  const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-    client_type:      '',
-    email:            '',
-    password:         '',
-    confirm_password: '',
-    first_name:       '',
-    last_name:        '',
-    company_name:     '',
-    position:         '',
-    phone:            '',
+    client_type: '', email: '', password: '', confirm_password: '',
+    first_name: '', last_name: '', company_name: '', position: '', phone: '',
   });
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
-  const selectedType = CLIENT_TYPES.find(t => t.id === form.client_type);
-
-  // ── Step validation ────────────────────────────────────────────────────────
   const validateStep1 = () => {
-    if (!form.client_type) { setError('Please select your account type.'); return false; }
+    if (!form.client_type) { setError('Please select an account type.'); return false; }
     return true;
   };
 
@@ -79,10 +67,7 @@ export default function RegisterPage() {
     if (form.client_type === 'company') {
       const domain = form.email.split('@')[1]?.toLowerCase();
       if (domain && FREE_DOMAINS.has(domain)) {
-        setError(
-          `Company accounts require a company email address. ` +
-          `Free providers like @${domain} are not accepted.`
-        );
+        setError(`Company accounts require a company email. Free providers like @${domain} are not accepted.`);
         return false;
       }
     }
@@ -95,8 +80,7 @@ export default function RegisterPage() {
     setError('');
     if (!form.first_name.trim()) { setError('First name is required.'); return false; }
     if (form.client_type === 'company' && !form.company_name.trim()) {
-      setError('Company name is required for Company accounts.');
-      return false;
+      setError('Company name is required.'); return false;
     }
     return true;
   };
@@ -115,8 +99,6 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
-      
-      // Auto-submit pending draft quote if any
       const draftKey = localStorage.getItem('kargopath_draft_key');
       if (draftKey) {
         try {
@@ -124,16 +106,14 @@ export default function RegisterPage() {
           localStorage.removeItem('kargopath_draft_key');
           navigate('/dashboard', { replace: true, state: { quoteSubmitted: true, reference: req.reference_no } });
           return;
-        } catch (apiErr) {
-          console.error("Auto-submit draft failed:", apiErr);
+        } catch {
           localStorage.removeItem('kargopath_draft_key');
         }
       }
-
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const msg = typeof err === 'object'
-        ? Object.entries(err).map(([k, v]) => `${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+        ? Object.entries(err).map(([, v]) => Array.isArray(v) ? v.join(', ') : v).join(' | ')
         : 'Registration failed. Please try again.';
       setError(msg);
     } finally {
@@ -142,277 +122,297 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans overflow-x-hidden">
-      {/* Background */}
-      <div className="absolute top-0 left-0 w-full h-72 bg-gradient-to-br from-blue-700 to-sky-500 z-0" />
-      <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl z-0 overflow-hidden" />
+    <div className="min-h-screen bg-slate-100 flex font-sans overflow-x-hidden">
 
-      <div className="w-full max-w-lg z-10">
-        {/* Back to home */}
-        <div className="mb-5">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-blue-200 hover:text-white text-sm font-semibold transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Home
+      {/* ── Left sidebar ── */}
+      <div className="hidden lg:flex w-72 xl:w-80 bg-slate-900 flex-col flex-shrink-0">
+        <div className="px-7 py-5 border-b border-slate-800">
+          <Link to="/" className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-blue-400" />
+            <span className="text-white font-bold tracking-tight">KargoPath</span>
           </Link>
         </div>
 
-        {/* Header */}
-        <div className="text-center mb-7">
-          <Link to="/" className="inline-flex items-center justify-center w-14 h-14 bg-white rounded-2xl shadow-xl mb-4 hover:scale-105 transition-transform">
-            <Package className="w-7 h-7 text-blue-600" />
-          </Link>
-          <h1 className="text-3xl font-extrabold text-white mb-1.5">Create Your Account</h1>
-          <p className="text-blue-100 text-sm font-medium">
-            Already have one?{' '}
-            <Link to="/login" target="_blank" rel="noopener noreferrer" className="text-white font-bold underline underline-offset-2 hover:text-blue-200">Sign in here</Link>
-          </p>
-        </div>
-
-        {/* Progress steps */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          {['Account Type','Credentials','Your Profile'].map((label, i) => {
-            const n = i + 1;
-            const done   = step > n;
-            const active = step === n;
-            return (
-              <React.Fragment key={n}>
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                    done   ? 'bg-green-500 border-green-500 text-white' :
-                    active ? 'bg-white border-white text-blue-700' :
-                             'bg-white/20 border-white/30 text-white/50'
+        <div className="px-7 py-7 flex-1">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-5">Registration</p>
+          <div className="space-y-0.5">
+            {STEPS.map((label, i) => {
+              const n = i + 1;
+              const done   = step > n;
+              const active = step === n;
+              return (
+                <div key={n} className={`flex items-center gap-3 px-3 py-2.5 ${active ? 'bg-slate-800' : ''}`}>
+                  <div className={`w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0 border ${
+                    done   ? 'bg-blue-600 border-blue-600 text-white' :
+                    active ? 'bg-white border-white text-slate-900' :
+                             'border-slate-700 text-slate-600'
                   }`}>
-                    {done ? <CheckCircle2 className="w-4 h-4" /> : n}
+                    {done ? <CheckCircle2 className="w-3 h-3" /> : n}
                   </div>
-                  <span className={`text-xs font-semibold hidden sm:block ${active ? 'text-white' : 'text-white/50'}`}>{label}</span>
+                  <span className={`text-sm ${active ? 'text-white font-semibold' : done ? 'text-blue-400' : 'text-slate-600'}`}>
+                    {label}
+                  </span>
                 </div>
-                {i < 2 && <div className={`flex-1 h-px max-w-[40px] ${step > n ? 'bg-green-400' : 'bg-white/20'}`} />}
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-800">
+            <p className="text-xs text-slate-500">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-semibold">Sign in</Link>
+            </p>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-          {/* Error banner */}
-          {error && (
-            <div className="flex items-start gap-3 p-4 bg-red-50 border-b border-red-100 text-red-700">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">{error}</p>
+        <div className="px-7 py-4 border-t border-slate-800">
+          <p className="text-xs text-slate-600">© 2026 KargoPath</p>
+        </div>
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 flex flex-col overflow-y-auto">
+
+        {/* Mobile top bar */}
+        <div className="lg:hidden flex items-center justify-between px-5 py-3 bg-white border-b border-slate-200">
+          <Link to="/" className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-blue-600" />
+            <span className="font-bold text-slate-900 text-sm">KargoPath</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            {STEPS.map((_, i) => (
+              <div key={i} className={`w-6 h-0.5 ${step > i + 1 ? 'bg-blue-600' : step === i + 1 ? 'bg-blue-600' : 'bg-slate-200'}`} />
+            ))}
+          </div>
+          <Link to="/login" className="text-xs font-semibold text-blue-600">Sign in</Link>
+        </div>
+
+        <div className="flex-1 flex items-start justify-center px-5 py-8 lg:px-12 lg:py-10">
+          <div className="w-full max-w-md">
+
+            {/* Title */}
+            <div className="mb-5">
+              <h1 className="text-lg font-bold text-slate-900">
+                {step === 1 && 'Select Account Type'}
+                {step === 2 && 'Set Your Credentials'}
+                {step === 3 && 'Complete Your Profile'}
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">Step {step} of {STEPS.length}</p>
             </div>
-          )}
 
-          <div className="p-7">
-
-            {/* ── STEP 1: Client Type ─────────────────────────────────── */}
-            {step === 1 && (
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900 mb-1">What best describes you?</h2>
-                <p className="text-sm text-slate-500 font-medium mb-6">This helps us tailor your experience and verify your account correctly.</p>
-                <div className="space-y-3">
-                  {CLIENT_TYPES.map(t => {
-                    const selected = form.client_type === t.id;
-                    const c = COLOR[t.color];
-                    return (
-                      <button key={t.id} type="button"
-                        onClick={() => { setForm(p => ({ ...p, client_type: t.id })); setError(''); }}
-                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
-                          selected ? `${c.border} ${c.bg} ring-4 ${c.ring}` : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}>
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
-                            selected ? `${c.bg} ${c.text}` : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {t.icon}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className={`font-bold ${selected ? c.text : 'text-slate-900'}`}>{t.label}</p>
-                              <span className="text-xs text-slate-400 font-medium">{t.sub}</span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">{t.desc}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                            selected ? `${c.border} bg-white` : 'border-slate-300'
-                          }`}>
-                            {selected && <div className={`w-2.5 h-2.5 rounded-full ${c.bg.replace('bg-','bg-').replace('50','600')}`} />}
-                          </div>
-                        </div>
-                        {selected && (
-                          <div className={`mt-3 pt-3 border-t ${c.border.replace('border-','border-').replace('500','200')} flex items-center gap-1.5`}>
-                            <span className="text-xs">📧</span>
-                            <p className={`text-xs font-semibold ${c.text}`}>{t.emailNote}</p>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Error */}
+            {error && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-700 mb-4">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p className="text-xs font-medium">{error}</p>
               </div>
             )}
 
-            {/* ── STEP 2: Credentials ─────────────────────────────────── */}
+            {/* ── STEP 1 ── */}
+            {step === 1 && (
+              <div className="space-y-2">
+                {CLIENT_TYPES.map(t => {
+                  const selected = form.client_type === t.id;
+                  return (
+                    <button key={t.id} type="button"
+                      onClick={() => { setForm(p => ({ ...p, client_type: t.id })); setError(''); }}
+                      className={`w-full text-left p-4 border-2 transition-all ${
+                        selected ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${
+                          selected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {t.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <p className={`text-sm font-bold ${selected ? 'text-blue-700' : 'text-slate-900'}`}>{t.label}</p>
+                            <span className="text-xs text-slate-400">{t.sub}</span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{t.desc}</p>
+                          {selected && (
+                            <p className="text-xs font-semibold text-blue-600 mt-1.5">📧 {t.emailNote}</p>
+                          )}
+                        </div>
+                        <div className={`w-4 h-4 border-2 flex-shrink-0 mt-0.5 flex items-center justify-center ${
+                          selected ? 'border-blue-600' : 'border-slate-300'
+                        }`}>
+                          {selected && <div className="w-2 h-2 bg-blue-600" />}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── STEP 2 ── */}
             {step === 2 && (
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900 mb-1">Set Your Credentials</h2>
-                <p className="text-sm text-slate-500 font-medium mb-6">
-                  {form.client_type === 'company'
-                    ? '⚠️ Company accounts require a company email address.'
-                    : 'Personal email (Gmail, etc.) is accepted for Personal Business accounts.'}
-                </p>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                      Email Address
-                      {form.client_type === 'company' && (
-                        <span className="ml-2 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Company email required</span>
-                      )}
-                    </label>
-                    <div className="relative">
-                      <IconWrap><Mail className="w-5 h-5" /></IconWrap>
-                      <input required type="email" value={form.email} onChange={set('email')}
-                        placeholder={form.client_type === 'company' ? 'you@yourcompany.com' : 'you@example.com'}
-                        autoComplete="email" className={inputClass} />
-                    </div>
+              <div className="space-y-3">
+                {form.client_type === 'company' && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    Company accounts require a company email address (e.g. @yourcompany.com).
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
-                    <div className="relative">
-                      <IconWrap><Lock className="w-5 h-5" /></IconWrap>
-                      <input required type="password" value={form.password} onChange={set('password')}
-                        placeholder="Min. 8 characters" autoComplete="new-password" className={inputClass} />
-                    </div>
-                    <div className="flex gap-1 mt-2">
+                )}
+                <div>
+                  <label className={labelBase}>Email Address</label>
+                  <div className="relative">
+                    <IconWrap><Mail className="w-4 h-4" /></IconWrap>
+                    <input required type="email" value={form.email} onChange={set('email')}
+                      placeholder={form.client_type === 'company' ? 'you@yourcompany.com' : 'you@example.com'}
+                      autoComplete="email" className={inputBase} />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelBase}>Password</label>
+                  <div className="relative">
+                    <IconWrap><Lock className="w-4 h-4" /></IconWrap>
+                    <input required type="password" value={form.password} onChange={set('password')}
+                      placeholder="Minimum 8 characters" autoComplete="new-password" className={inputBase} />
+                  </div>
+                  {form.password && (
+                    <div className="flex gap-1 mt-1.5">
                       {[1,2,3,4].map(n => (
-                        <div key={n} className={`h-1 flex-1 rounded-full transition-all ${
+                        <div key={n} className={`h-0.5 flex-1 transition-all ${
                           form.password.length >= n * 3
-                            ? form.password.length >= 10 ? 'bg-green-500' : 'bg-yellow-400'
+                            ? form.password.length >= 10 ? 'bg-green-500' : 'bg-amber-400'
                             : 'bg-slate-200'
                         }`} />
                       ))}
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Confirm Password</label>
-                    <div className="relative">
-                      <IconWrap><Lock className="w-5 h-5" /></IconWrap>
-                      <input required type="password" value={form.confirm_password} onChange={set('confirm_password')}
-                        placeholder="Repeat your password" autoComplete="new-password" className={inputClass} />
-                      {form.confirm_password && (
-                        <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${
-                          form.password === form.confirm_password ? 'text-green-500' : 'text-red-400'
-                        }`}>
-                          {form.password === form.confirm_password ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                        </div>
-                      )}
-                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className={labelBase}>Confirm Password</label>
+                  <div className="relative">
+                    <IconWrap><Lock className="w-4 h-4" /></IconWrap>
+                    <input required type="password" value={form.confirm_password} onChange={set('confirm_password')}
+                      placeholder="Repeat your password" autoComplete="new-password" className={inputBase} />
+                    {form.confirm_password && (
+                      <div className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                        form.password === form.confirm_password ? 'text-green-500' : 'text-red-400'
+                      }`}>
+                        {form.password === form.confirm_password
+                          ? <CheckCircle2 className="w-4 h-4" />
+                          : <AlertCircle className="w-4 h-4" />}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ── STEP 3: Profile ─────────────────────────────────────── */}
+            {/* ── STEP 3 ── */}
             {step === 3 && (
-              <form onSubmit={handleSubmit}>
-                <h2 className="text-xl font-extrabold text-slate-900 mb-1">Your Basic Profile</h2>
-                <p className="text-sm text-slate-500 font-medium mb-6">
-                  You can complete full verification later to unlock booking capabilities.
-                </p>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">First Name *</label>
-                      <div className="relative">
-                        <IconWrap><User className="w-5 h-5" /></IconWrap>
-                        <input required type="text" value={form.first_name} onChange={set('first_name')} placeholder="John" className={inputClass} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Last Name</label>
-                      <div className="relative">
-                        <IconWrap><User className="w-5 h-5" /></IconWrap>
-                        <input type="text" value={form.last_name} onChange={set('last_name')} placeholder="Doe" className={inputClass} />
-                      </div>
-                    </div>
-                  </div>
-
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                      Phone / WhatsApp *
-                    </label>
+                    <label className={labelBase}>First Name *</label>
                     <div className="relative">
-                      <IconWrap><Phone className="w-5 h-5" /></IconWrap>
-                      <input required type="tel" value={form.phone} onChange={set('phone')} placeholder="+62 812 3456 7890" className={inputClass} />
+                      <IconWrap><User className="w-4 h-4" /></IconWrap>
+                      <input required type="text" value={form.first_name} onChange={set('first_name')}
+                        placeholder="John" className={inputBase} />
                     </div>
                   </div>
-
-                  {form.client_type === 'company' && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Company Name *</label>
-                        <div className="relative">
-                          <IconWrap><Building2 className="w-5 h-5" /></IconWrap>
-                          <input required type="text" value={form.company_name} onChange={set('company_name')}
-                            placeholder="PT Logistik Nusantara"
-                            className={inputClass} />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Your Position / Title</label>
-                        <div className="relative">
-                          <IconWrap><Briefcase className="w-5 h-5" /></IconWrap>
-                          <input type="text" value={form.position} onChange={set('position')} placeholder="e.g. Logistics Manager" className={inputClass} />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* KYC notice */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
-                    <span className="text-xl flex-shrink-0">🔒</span>
-                    <div>
-                      <p className="text-sm font-bold text-amber-800 mb-1">Identity Verification Required to Confirm Bookings</p>
-                      <p className="text-xs text-amber-700 font-medium leading-relaxed">
-                        You can request quotations right away. To accept a booking and create shipments,
-                        you'll need to complete identity verification in your profile settings.
-                        {form.client_type === 'company' && ' Requires: NPWP + NIB/SIUP + company email.'}
-                        {form.client_type === 'personal_business' && ' Personal Business accounts require sales review before booking is enabled.'}
-                      </p>
+                  <div>
+                    <label className={labelBase}>Last Name</label>
+                    <div className="relative">
+                      <IconWrap><User className="w-4 h-4" /></IconWrap>
+                      <input type="text" value={form.last_name} onChange={set('last_name')}
+                        placeholder="Doe" className={inputBase} />
                     </div>
                   </div>
-
-                  <button type="submit" disabled={loading}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 text-lg">
-                    {loading
-                      ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
-                      : <><span>Create Account</span><ArrowRight className="w-5 h-5" /></>}
-                  </button>
                 </div>
+
+                {/* Phone — different label & hint per type */}
+                <div>
+                  <label className={labelBase}>
+                    {form.client_type === 'company' ? 'Office Phone *' : 'Phone / WhatsApp *'}
+                  </label>
+                  <div className="relative">
+                    <IconWrap><Phone className="w-4 h-4" /></IconWrap>
+                    <input required type="tel" value={form.phone} onChange={set('phone')}
+                      placeholder={form.client_type === 'company' ? '+62 21 1234 5678' : '+62 812 3456 7890'}
+                      className={inputBase} />
+                  </div>
+                  {form.client_type === 'company' && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Use your company's office number. WhatsApp communication is available once a shipment is active.
+                    </p>
+                  )}
+                </div>
+
+                {form.client_type === 'company' && (
+                  <>
+                    <div>
+                      <label className={labelBase}>Company Name *</label>
+                      <div className="relative">
+                        <IconWrap><Building2 className="w-4 h-4" /></IconWrap>
+                        <input required type="text" value={form.company_name} onChange={set('company_name')}
+                          placeholder="PT Logistik Nusantara" className={inputBase} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelBase}>Position / Title</label>
+                      <div className="relative">
+                        <IconWrap><Briefcase className="w-4 h-4" /></IconWrap>
+                        <input type="text" value={form.position} onChange={set('position')}
+                          placeholder="e.g. Logistics Manager" className={inputBase} />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* KYC notice */}
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                  <span className="flex-shrink-0">⚠</span>
+                  <div>
+                    <p className="font-bold mb-0.5">Verification required to confirm bookings</p>
+                    <p className="text-amber-700 leading-relaxed">
+                      {form.client_type === 'company'
+                        ? 'Requires: NPWP + NIB/SIUP + company email. Communication via email or in-app chat.'
+                        : 'Personal Business accounts require sales review before booking is enabled.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={loading}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2">
+                  {loading
+                    ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
+                    : <><span>Create Account</span><ArrowRight className="w-4 h-4" /></>}
+                </button>
               </form>
             )}
+
+            {/* Nav buttons (step 1 & 2) */}
+            {step < 3 && (
+              <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-200">
+                {step > 1
+                  ? <button type="button" onClick={() => { setError(''); setStep(s => s - 1); }}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-colors">
+                      <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                  : <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+                      <ArrowLeft className="w-4 h-4" /> Back to Home
+                    </Link>
+                }
+                <button type="button" onClick={next}
+                  className="flex items-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-colors">
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-400 mt-5 text-center">
+              By creating an account you agree to our{' '}
+              <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and{' '}
+              <a href="#" className="underline hover:text-slate-600">Privacy Policy</a>.
+            </p>
           </div>
-
-          {/* Footer nav */}
-          {step < 3 && (
-            <div className="px-7 pb-7 flex items-center justify-between gap-4">
-              {step > 1
-                ? <button type="button" onClick={() => { setError(''); setStep(s => s - 1); }}
-                    className="flex items-center gap-2 px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all text-sm">
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                : <div />}
-              <button type="button" onClick={next}
-                className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 transition-all hover:-translate-y-0.5 text-sm">
-                Continue <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
         </div>
-
-        <p className="text-center text-xs text-slate-400 mt-5">
-          By creating an account you agree to our{' '}
-          <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and{' '}
-          <a href="#" className="underline hover:text-slate-600">Privacy Policy</a>.
-        </p>
       </div>
     </div>
   );
