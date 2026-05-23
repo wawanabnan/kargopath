@@ -138,12 +138,6 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
             </button>
 
-            {/* New Quote */}
-            <Link to="/quote"
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
-              + New Quote
-            </Link>
-
             {/* User dropdown */}
             <div className="relative" ref={userMenuRef}>
               <button

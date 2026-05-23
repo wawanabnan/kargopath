@@ -93,18 +93,27 @@ Shipment.objects.create(
 
 ---
 
-## Prioritas 3: Fase 3 — Client Portal/Dashboard (NANTI)
+## Prioritas 3: Fase 3 — Client Portal/Dashboard
 
-**Status:** ⏳ PENDING (tunggu backend selesai)
+**Status:** 🔄 IN PROGRESS
 
-**Catatan:** Public pages sudah cukup, JANGAN diubah dulu.
+### Selesai:
+- [x] DashboardPage — compact corporate style, collapsible sidebar
+- [x] DashboardLayout — shared layout component untuk semua dashboard pages
+- [x] User dropdown (avatar pojok kanan atas) — Edit Profile, Change Password, Sign Out
+- [x] RegisterPage — corporate style, 2 client types
+- [x] QuotationsListPage — list semua quotation requests
+- [x] KYCPage — form verifikasi dokumen
+- [x] EditProfilePage — edit profil user
+- [x] ChangePasswordPage — ganti password
 
-### Future Tasks:
-- Client Dashboard UI
-- Quotation management UI
-- Shipment tracking UI
-- Document management UI
-- Public tracking page (tanpa login)
+### Masih perlu dikerjakan:
+- [ ] QuoteDetailPage — detail quotation, tombol accept/reject
+- [ ] ShipmentDetailPage — detail shipment + milestones
+- [ ] ShipmentsPage — list shipments
+
+### Tidak dikerjakan (deferred):
+- ~~Public tracking page~~ — dikerjakan TERAKHIR setelah quotation → booking → shipment flow selesai
 
 ---
 
