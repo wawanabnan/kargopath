@@ -19,7 +19,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     company_name     = serializers.CharField(required=False, allow_blank=True, default='')
     position         = serializers.CharField(required=False, allow_blank=True, default='')
     phone            = serializers.CharField(required=False, allow_blank=True, default='')
-    client_type      = serializers.ChoiceField(choices=['individual', 'business', 'corporate'])
+    client_type      = serializers.ChoiceField(choices=['company', 'personal_business'])
 
     class Meta:
         model  = User
