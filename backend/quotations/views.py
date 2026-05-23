@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 import uuid
@@ -18,10 +19,12 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
     CRUD untuk QuotationRequest.
 
     Endpoints:
-      POST   /api/v1/quotations/requests/         → Client submit request (authenticated)
-      GET    /api/v1/quotations/requests/          → List (client: own | sales/admin: all)
-      GET    /api/v1/quotations/requests/{id}/     → Detail
-      PATCH  /api/v1/quotations/requests/{id}/     → Update status (sales only)
+      POST   /api/v1/quotations/requests/                → Client submit request (authenticated)
+      GET    /api/v1/quotations/requests/                → List (client: own | sales/admin: all)
+      GET    /api/v1/quotations/requests/{id}/           → Detail
+      PATCH  /api/v1/quotations/requests/{id}/           → Update status (sales only)
+      POST   /api/v1/quotations/requests/save-draft/     → Save draft to session (public)
+      POST   /api/v1/quotations/requests/submit-draft/   → Convert session draft → QuotationRequest (authenticated)
     """
     serializer_class   = QuotationRequestSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -44,6 +47,67 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(submitted_by=self.request.user, status='PENDING')
+
+    @action(
+        detail=False, methods=['post'],
+        permission_classes=[permissions.AllowAny],
+        url_path='save-draft',
+    )
+    def save_draft(self, request):
+        """
+        Public endpoint — save quotation form data to session.
+        Returns a draft_key the frontend can store and send back after login.
+
+        POST /api/v1/quotations/requests/save-draft/
+        Body: any valid quotation request fields (partial OK)
+        Response: { "draft_key": "<uuid>" }
+        """
+        draft_key = str(uuid.uuid4())
+        # Store all submitted fields; frontend may send partial data
+        request.session[f'quotation_draft_{draft_key}'] = request.data
+        request.session.modified = True
+        return Response({'draft_key': draft_key}, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False, methods=['post'],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='submit-draft',
+    )
+    def submit_draft(self, request):
+        """
+        Authenticated endpoint — retrieve draft from session and create QuotationRequest.
+        Call this after the user registers/logs in.
+
+        POST /api/v1/quotations/requests/submit-draft/
+        Body: { "draft_key": "<uuid>" }
+        Response: full QuotationRequest object
+        """
+        draft_key = request.data.get('draft_key')
+        if not draft_key:
+            return Response({'detail': 'draft_key is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        session_key = f'quotation_draft_{draft_key}'
+        draft_data = request.session.get(session_key)
+        if not draft_data:
+            return Response(
+                {'detail': 'Draft not found or expired. Please fill the form again.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = QuotationRequestSerializer(data=draft_data, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        quotation_request = serializer.save(submitted_by=request.user, status='PENDING')
+
+        # Clean up session after successful submit
+        del request.session[session_key]
+        request.session.modified = True
+
+        return Response(
+            QuotationRequestSerializer(quotation_request, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=['patch'],
             permission_classes=[permissions.IsAuthenticated])
@@ -137,6 +201,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         shipment_num = f"LP-{year}-{seq:05d}"
         
         Shipment.objects.create(
+            tenant=quotation.request.tenant,
             shipment_number=shipment_num,
             quotation=quotation,
             client=quotation.request.submitted_by,

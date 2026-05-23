@@ -23,7 +23,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
         serializer = ShipmentMilestoneSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(shipment=shipment, updated_by=request.user)
+            serializer.save(
+                shipment=shipment,
+                updated_by=request.user,
+                tenant=request.user.tenant,  # auto-set tenant
+            )
             # Update shipment status based on milestone if provided
             new_status = request.data.get('new_shipment_status')
             if new_status:
@@ -39,6 +43,10 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.get_object()
         serializer = ShipmentDocumentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(shipment=shipment, uploaded_by=request.user)
+            serializer.save(
+                shipment=shipment,
+                uploaded_by=request.user,
+                tenant=request.user.tenant,  # auto-set tenant
+            )
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)

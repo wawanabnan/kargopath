@@ -30,6 +30,9 @@ class Shipment(models.Model):
     def __str__(self):
         return f"{self.shipment_number} - {self.client.email}"
 
+    class Meta:
+        ordering = ['-created_at']
+
 class ShipmentMilestone(models.Model):
     tenant = models.ForeignKey(
         'users.Tenant',
