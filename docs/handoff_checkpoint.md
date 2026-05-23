@@ -2,76 +2,89 @@
 
 > **Last Updated:** 2026-05-23
 > **Purpose:** Baca file ini PERTAMA jika chat/proses terhenti. Ringkasan cepat agar AI/Human berikutnya bisa lanjut tanpa membaca semua dokumen dari nol.
+> **Cara pakai:** Buka Kiro → chat baru → ketik "baca docs/handoff_checkpoint.md dulu"
 
 ---
 
 ## TL;DR Current State
 
 - Project: **KargoPath** — logistics management SaaS app untuk perusahaan 3PL
-- **Fase 1 (Multi-Tenant Foundation):** ✅ 100% selesai
-- **Fase 2 (Backend API Refinement):** ✅ 100% selesai
-- **Fase 3 (Frontend):** 🔄 IN PROGRESS
-- Latest commit: `394730a` — fix client_type choices in serializer
-- Backend berjalan di: `http://127.0.0.1:8000`
-- Frontend berjalan di: `http://localhost:5173`
+- **Fase 1 (Multi-Tenant Foundation):** ✅ selesai
+- **Fase 2 (Backend API Refinement):** ✅ selesai
+- **Fase 3 (Frontend Client Portal):** 🔄 IN PROGRESS
+- Latest commit: `5efa2d8` — user dropdown header (Edit Profile, Change Password, Sign Out)
+- Backend: `http://127.0.0.1:8000`
+- Frontend: `http://localhost:5173`
+- Repo: `https://github.com/wawanabnan/kargopath.git`
 
 ---
 
-## Yang Baru Saja Dikerjakan (Sesi Ini)
+## Yang Sudah Selesai (Fase 3)
 
-### Backend
-- JWT login/register sekarang return `user` + `tenant` + `access` + `refresh`
-- `RegisterView` langsung return token (tidak perlu login lagi setelah register)
-- `UserRegistrationSerializer.create()` auto-assign default tenant (id=1)
-- `CLIENT_TYPE_CHOICES` diubah dari 3 tipe menjadi 2:
-  - `company` = entitas bisnis formal (CV, PT, Corporate, BUMN)
-  - `personal_business` = perorangan potensial, perlu sales review
-- Migration `users/0004_update_client_type_choices.py` sudah diapply
-- `ShipmentMilestone` & `ShipmentDocument` auto-set tenant saat dibuat
-- `Shipment` model dapat `ordering = ['-created_at']`
-- Draft quotation flow: `save-draft/` (public) + `submit-draft/` (authenticated)
+### Frontend — Halaman & Komponen
+- [x] `DashboardPage` — compact corporate style, collapsible sidebar
+- [x] `DashboardLayout` — shared layout component (sidebar + topbar + mobile nav)
+  - Sidebar: `w-52` collapsible ke `w-14`, `bg-slate-900`
+  - Topbar: `h-12 bg-white`, Bell, "+ New Quote", user dropdown
+  - User dropdown: Edit Profile, Change Password, Sign Out (merah)
+- [x] `RegisterPage` — 3-step, 2 client types (Company / Personal Business)
+- [x] `LoginPage` — JWT login, auto-submit draft quote
+- [x] `ShipmentsPage` — pakai DashboardLayout, paginated response fix
+- [x] `ShipmentDetailPage` — pakai DashboardLayout, tracking timeline
+- [x] `QuoteDetailPage` — pakai DashboardLayout, accept/reject/print
+- [x] `RequestQuotePage` — pakai DashboardLayout kalau login, standalone kalau guest
+- [x] `EditProfilePage` — edit first/last name, read-only email/company
+- [x] `ChangePasswordPage` — current + new + confirm password, auto logout setelah berhasil
 
-### Frontend
-- `AuthContext` — simpan `tenant` di state & localStorage, register tidak double-call
-- `api.js` — `saveAuth`/`clearAuth` handle tenant, tambah `saveDraft`/`submitDraft`
-- `DashboardPage` — handle paginated response `{results, count}`
-- `RegisterPage` — redesign corporate style, 2 tipe client, office phone untuk company
-- `index.css` — `overflow-x: hidden` di html/body (fix horizontal scroll)
-
----
-
-## Yang Masih Perlu Diselesaikan
-
-### Bug Aktif
-- [ ] **Nama user hilang di dashboard** setelah register/login
-  - Root cause: `user` object dari register response tidak punya `company` field
-  - Fix sudah ditulis di `AuthContext.jsx` (login & register fetch profile setelah dapat token)
-  - **Perlu di-commit dan di-test**
-
-### Fase 3 — Frontend (Lanjutan)
-- [ ] Commit fix nama user di dashboard
-- [ ] `LoginPage` — sama seperti register, perlu fetch profile setelah login
-- [ ] `ShipmentsPage` — halaman list shipment
-- [ ] `ShipmentDetailPage` — detail shipment + milestones
-- [ ] `QuoteDetailPage` — detail quotation, tombol accept/reject
-- [ ] `KYCPage` — form verifikasi dokumen
-- [ ] Public tracking page (nanti)
+### Backend — Yang Belum Ada (Perlu Dibuat)
+- [ ] `POST /api/v1/auth/change-password/` — endpoint untuk change password
+  - Butuh: `current_password`, `new_password`
+  - Validasi: cek current password benar, update password user
 
 ---
 
-## Cara Lanjut Setelah Stuck
+## Yang Perlu Dikerjakan Berikutnya
 
-### 1. Baca file ini dulu
-Sudah kamu lakukan ✓
+### Priority 1 — Backend: Change Password Endpoint
+File: `backend/users/views.py` dan `backend/users/urls.py`
 
-### 2. Cek git status
-```powershell
-cd D:\Developments\kargopath
-git log --oneline -5
-git status
+```python
+# views.py — tambah ChangePasswordView
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        current = request.data.get('current_password')
+        new_pw  = request.data.get('new_password')
+        if not request.user.check_password(current):
+            return Response({'current_password': ['Wrong password.']}, status=400)
+        if len(new_pw) < 8:
+            return Response({'new_password': ['Min 8 characters.']}, status=400)
+        request.user.set_password(new_pw)
+        request.user.save()
+        return Response({'detail': 'Password changed.'})
+
+# urls.py — tambah
+path('change-password/', ChangePasswordView.as_view(), name='change-password'),
 ```
 
-### 3. Jalankan server
+### Priority 2 — Frontend: Quotations List Page
+- Route `/dashboard/quotations` saat ini redirect ke `/dashboard`
+- Perlu buat `QuotationsListPage.jsx` yang list semua quotation requests
+- Mirip tabel di DashboardPage tapi lebih lengkap (filter, search, pagination)
+
+### Priority 3 — KYC / Verification Page
+- `KYCPage.jsx` sudah ada tapi belum diintegrasikan dengan baik
+- Perlu review dan update sesuai 2 client types baru (company vs personal_business)
+
+### Priority 4 — Public Tracking Page
+- Route `/tracking` sudah ada tapi belum diimplementasi
+- User bisa track shipment tanpa login dengan shipment number
+
+---
+
+## Cara Jalankan Server
+
 ```powershell
 # Backend (dari folder backend)
 cd D:\Developments\kargopath\backend
@@ -82,26 +95,19 @@ cd D:\Developments\kargopath\frontend
 npm run dev
 ```
 
-### 4. Jalankan test untuk verifikasi
-```powershell
-cd D:\Developments\kargopath\backend
-py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
-```
-Expected: `Ran 10 tests ... OK`
-
-### 5. Baca dokumen tambahan jika perlu
-- `docs/next_steps.md` — task list detail
-- `docs/decision_log.md` — semua keputusan arsitektur & produk
-- `docs/current_status.md` — status lengkap per komponen
-
----
-
 ## Test Credentials
 
 | Email | Password | Role |
 |-------|----------|------|
 | `admin@kargopath.com` | `admin123456` | ADMIN (superuser) |
-| `admin@ptmaju.com` | *(password lama)* | CLIENT |
+
+## Jalankan Tests
+
+```powershell
+cd D:\Developments\kargopath\backend
+py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
+```
+Expected: `Ran 10 tests ... OK`
 
 ---
 
@@ -116,20 +122,23 @@ Database (SQLite dev / PostgreSQL prod)
 ```
 
 **Multi-tenant:** shared DB, semua model punya FK ke `Tenant`.
-- `Tenant` = perusahaan 3PL yang pakai KargoPath
-- `Company` = client/customer dari tenant tersebut
+- `Tenant` = perusahaan 3PL yang pakai KargoPath (default: PT. Kargopath Logistic Nusantara, id=1)
+- `Company` = client/customer dari tenant
 - `User.tenant` wajib, `User.company` opsional
 
-**Auth flow:**
-1. Register → backend return `{user, tenant, access, refresh}` langsung
-2. Login → sama, return `{user, tenant, access, refresh}`
-3. Frontend simpan ke localStorage, `AuthContext` expose via `useAuth()`
+**Client Types:**
+- `company` = entitas bisnis formal, wajib company email + NPWP + NIB/SIUP
+- `personal_business` = perorangan potensial, perlu sales review
 
-**Draft quotation flow (lead generation):**
+**Auth flow:**
+1. Register/Login → backend return `{user, tenant, access, refresh}`
+2. `AuthContext` simpan ke localStorage, fetch full profile setelah dapat token
+3. JWT access token: 1 hari, refresh: 7 hari
+
+**Draft quotation flow:**
 1. Guest isi form → `POST /api/v1/quotations/requests/save-draft/` → dapat `draft_key`
-2. Frontend simpan `draft_key` di localStorage
-3. Guest register/login → `POST /api/v1/quotations/requests/submit-draft/` dengan `draft_key`
-4. Redirect ke dashboard dengan toast sukses
+2. Simpan `draft_key` di localStorage
+3. Setelah register/login → `POST /api/v1/quotations/requests/submit-draft/`
 
 ---
 
@@ -137,18 +146,17 @@ Database (SQLite dev / PostgreSQL prod)
 
 ```
 backend/
-  users/models.py          — User, Tenant, Company, ClientProfile
-  users/serializers.py     — UserRegistrationSerializer, UserProfileSerializer
-  users/views.py           — RegisterView, CustomTokenObtainPairSerializer
-  quotations/views.py      — QuotationRequestViewSet (draft flow)
-  config/settings.py       — DRF settings, middleware
+  users/views.py           — Auth views, JWT serializer
+  users/serializers.py     — Registration, profile serializers
+  users/urls.py            — Auth URL routing
 
 frontend/src/
-  context/AuthContext.jsx  — login, register, logout, user/tenant state
-  api.js                   — semua API calls
-  pages/DashboardPage.jsx  — main client portal
-  pages/RegisterPage.jsx   — 3-step registration
-  pages/LoginPage.jsx      — login + auto-submit draft
+  components/DashboardLayout.jsx  — Shared layout (sidebar + topbar + dropdown)
+  context/AuthContext.jsx         — login, register, logout, user/tenant state
+  api.js                          — Semua API calls
+  App.jsx                         — Route definitions
+  pages/DashboardPage.jsx         — Main dashboard
+  pages/RegisterPage.jsx          — 3-step registration
 ```
 
 ---
@@ -162,6 +170,17 @@ frontend/src/
 | D-003 | Default tenant: PT. Kargopath Logistic Nusantara (id=1) |
 | D-037 | 2 client types: `company` dan `personal_business` |
 | D-034 | Draft quotation flow untuk lead generation |
-| D-035 | Public pages jangan diubah dulu, fokus backend |
 
 Lihat `docs/decision_log.md` untuk detail lengkap.
+
+---
+
+## Git Log Terakhir
+
+```
+5efa2d8  feat: User dropdown in header - Edit Profile, Change Password, Sign Out
+ff163b5  feat: Shared DashboardLayout - all dashboard pages use consistent template
+1e8194b  feat: Dashboard - collapsible sidebar, compact corporate style
+fd0595c  fix: Import Tenant in serializers.py
+fc18d7d  fix: Fetch full profile after login/register so user name shows correctly
+```
