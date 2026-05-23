@@ -971,8 +971,15 @@ export default function RequestQuotePage() {
           await quotationRequestAPI.submit(payload);
           setSubmitted(true);
         } else {
-          // Guest: store in localStorage and redirect
-          localStorage.setItem('kargopath_pending_quote', JSON.stringify(payload));
+          // Guest: save draft to server session, store draft_key in localStorage
+          try {
+            const { draft_key } = await quotationRequestAPI.saveDraft(payload);
+            localStorage.setItem('kargopath_draft_key', draft_key);
+          } catch {
+            // Fallback: store payload locally if session save fails
+            localStorage.setItem('kargopath_draft_key', '');
+            localStorage.setItem('kargopath_pending_quote', JSON.stringify(payload));
+          }
           navigate('/register', { state: { quotePending: true } });
         }
       } catch (err) {

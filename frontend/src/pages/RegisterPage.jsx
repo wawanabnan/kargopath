@@ -126,17 +126,17 @@ export default function RegisterPage() {
     try {
       await register(form);
       
-      // Auto-submit pending quote if any
-      const pending = localStorage.getItem('kargopath_pending_quote');
-      if (pending) {
+      // Auto-submit pending draft quote if any
+      const draftKey = localStorage.getItem('kargopath_draft_key');
+      if (draftKey) {
         try {
-          const data = JSON.parse(pending);
-          const req = await quotationRequestAPI.submit(data);
-          localStorage.removeItem('kargopath_pending_quote');
+          const req = await quotationRequestAPI.submitDraft(draftKey);
+          localStorage.removeItem('kargopath_draft_key');
           navigate('/dashboard', { replace: true, state: { quoteSubmitted: true, reference: req.reference_no } });
           return;
         } catch (apiErr) {
-          console.error("Auto-submit pending quote failed:", apiErr);
+          console.error("Auto-submit draft failed:", apiErr);
+          localStorage.removeItem('kargopath_draft_key');
         }
       }
 

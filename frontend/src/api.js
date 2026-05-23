@@ -12,17 +12,23 @@ export const getUser         = () => {
   try { return JSON.parse(localStorage.getItem('user') || 'null'); }
   catch { return null; }
 };
+export const getTenant       = () => {
+  try { return JSON.parse(localStorage.getItem('tenant') || 'null'); }
+  catch { return null; }
+};
 
-export const saveAuth = ({ access, refresh, user }) => {
+export const saveAuth = ({ access, refresh, user, tenant }) => {
   localStorage.setItem('access_token',  access);
   localStorage.setItem('refresh_token', refresh);
   localStorage.setItem('user',          JSON.stringify(user));
+  if (tenant) localStorage.setItem('tenant', JSON.stringify(tenant));
 };
 
 export const clearAuth = () => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
+  localStorage.removeItem('tenant');
 };
 
 // ── Core fetch wrapper ────────────────────────────────────────────────────────
@@ -117,6 +123,17 @@ export const quotationRequestAPI = {
   updateStatus: (id, status) => request(`/quotations/requests/${id}/update_status/`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  }),
+
+  // Draft flow — for lead generation (public user fills form, submits after login)
+  saveDraft: (data) => request('/quotations/requests/save-draft/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+
+  submitDraft: (draftKey) => request('/quotations/requests/submit-draft/', {
+    method: 'POST',
+    body: JSON.stringify({ draft_key: draftKey }),
   }),
 };
 

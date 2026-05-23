@@ -33,8 +33,10 @@ export default function DashboardPage() {
           quotationRequestAPI.list(),
           shipmentAPI.list()
         ]);
-        setRequests(reqs);
-        setShipmentsCount(ships.length);
+        // API returns paginated response: { results: [], count: N }
+        setRequests(reqs?.results ?? reqs ?? []);
+        const shipList = ships?.results ?? ships ?? [];
+        setShipmentsCount(shipList.length);
       } catch (err) {
         console.error("Gagal mengambil data dashboard:", err);
       } finally {
