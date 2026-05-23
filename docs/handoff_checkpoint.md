@@ -1,77 +1,66 @@
 # KargoPath — Handoff Checkpoint
 
 > **Last Updated:** 2026-05-23
-> **Purpose:** Baca file ini PERTAMA jika chat/proses terhenti. Ringkasan cepat agar AI/Human berikutnya bisa lanjut tanpa membaca semua dokumen dari nol.
-> **Cara pakai:** Buka Kiro → chat baru → ketik "baca docs/handoff_checkpoint.md dulu"
+> **Baca file ini PERTAMA jika chat/proses terhenti.**
 
 ---
 
 ## TL;DR Current State
 
-- Project: **KargoPath** — logistics management SaaS app untuk perusahaan 3PL
-- **Fase 1 (Multi-Tenant Foundation):** ✅ selesai
-- **Fase 2 (Backend API Refinement):** ✅ selesai
-- **Fase 3 (Frontend Client Portal):** 🔄 IN PROGRESS
-- Latest commit: `5efa2d8` — user dropdown header (Edit Profile, Change Password, Sign Out)
-- Backend: `http://127.0.0.1:8000`
-- Frontend: `http://localhost:5173`
-- Repo: `https://github.com/wawanabnan/kargopath.git`
+- **Project:** KargoPath — logistics management SaaS untuk perusahaan 3PL
+- **Fase aktif:** Fase 3 — Client Portal & Core App
+- **Fase 1 & 2:** ✅ Selesai 100%
+- **Latest commit:** `3d9c663` — Login page redesign
+- **Backend:** `http://127.0.0.1:8000` | **Frontend:** `http://localhost:5173`
 
 ---
 
-## Yang Sudah Selesai (Fase 3)
+## Sedang Dikerjakan Sekarang
 
-### Frontend — Halaman & Komponen
-- [x] `DashboardPage` — compact corporate style, collapsible sidebar
-- [x] `DashboardLayout` — shared layout component (sidebar + topbar + mobile nav)
-  - Sidebar: `w-52` collapsible ke `w-14`, `bg-slate-900`
-  - Topbar: `h-12 bg-white`, Bell, "+ New Quote", user dropdown
-  - User dropdown: Edit Profile, Change Password, Sign Out (merah)
-- [x] `RegisterPage` — 3-step, 2 client types (Company / Personal Business)
-- [x] `LoginPage` — JWT login, auto-submit draft quote
-- [x] `ShipmentsPage` — pakai DashboardLayout, paginated response fix
-- [x] `ShipmentDetailPage` — pakai DashboardLayout, tracking timeline
-- [x] `QuoteDetailPage` — pakai DashboardLayout, accept/reject/print
-- [x] `RequestQuotePage` — pakai DashboardLayout kalau login, standalone kalau guest
-- [x] `EditProfilePage` — edit first/last name, read-only email/company
-- [x] `ChangePasswordPage` — current + new + confirm password, auto logout setelah berhasil
-- [x] `QuotationsListPage` — list semua quotation requests, filter + search
-- [x] `KYCPage` — updated sesuai 2 client types, pakai DashboardLayout
+**Modul Request Quotation** — 2 task:
 
-### Backend
-- [x] `POST /api/v1/auth/change-password/` — endpoint change password ✅
+1. **Redesign form** `RequestQuotePage.jsx` — sesuaikan style dengan dashboard (compact, border-radius 0, corporate)
+2. **Master data location** — buat backend model + API + frontend untuk:
+   - Moda transport (Sea, Air, Land)
+   - Scope layanan (D2D, D2P, P2D, P2P)
+   - Origin/Destination location (Port, Airport, City)
+   - Pickup & Delivery location untuk D2D
 
 ---
 
-## Yang Perlu Dikerjakan Berikutnya
+## Cara Lanjut Setelah Stuck
 
-### Priority 1 — Public Tracking Page
-- Route `/tracking` sudah ada tapi belum diimplementasi
-- User bisa track shipment tanpa login dengan shipment number
-- Perlu endpoint backend: `GET /api/v1/shipments/track/?number=LP-2026-00001`
-
-### Priority 2 — Dashboard Quotations nav link
-- Sidebar nav "Quotations" sudah link ke `/dashboard/quotations` ✅
-- Tapi `DashboardPage` tabel "View all quotations" button belum link ke sana
-- Fix: ubah button jadi `<Link to="/dashboard/quotations">`
-
-### Priority 3 — Sales/Admin Panel (future)
-- Dashboard saat ini hanya untuk CLIENT role
-- ADMIN/SALES perlu panel berbeda untuk manage quotations, assign sales, dll
-
----
-
-## Cara Jalankan Server
-
+### 1. Jalankan server
 ```powershell
-# Backend (dari folder backend)
+# Backend
 cd D:\Developments\kargopath\backend
 py -3 manage.py runserver
 
-# Frontend (dari folder frontend, terminal terpisah)
+# Frontend (terminal terpisah)
 cd D:\Developments\kargopath\frontend
 npm run dev
 ```
+
+### 2. Cek git status
+```powershell
+cd D:\Developments\kargopath
+git log --oneline -5
+git status
+```
+
+### 3. Jalankan tests
+```powershell
+cd D:\Developments\kargopath\backend
+py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
+```
+Expected: `Ran 10 tests ... OK`
+
+### 4. Baca dokumen tambahan
+- `docs/next_steps.md` — task list detail
+- `docs/decision_log.md` — keputusan arsitektur & produk
+- `docs/current_status.md` — status lengkap per komponen
+
+---
 
 ## Test Credentials
 
@@ -80,15 +69,7 @@ npm run dev
 | `admin@kargopath.com` | `admin123456` | ADMIN (superuser) |
 | `sales@kargopath.com` | `sales123456` | SALES |
 | `ops@kargopath.com`   | `ops123456`   | OPS |
-| `it@dakarsh.co.id`    | *(password lama)* | CLIENT |
-
-## Jalankan Tests
-
-```powershell
-cd D:\Developments\kargopath\backend
-py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
-```
-Expected: `Ran 10 tests ... OK`
+| `it@dakarsh.co.id`    | `client123456` | CLIENT |
 
 ---
 
@@ -103,18 +84,14 @@ Database (SQLite dev / PostgreSQL prod)
 ```
 
 **Multi-tenant:** shared DB, semua model punya FK ke `Tenant`.
-- `Tenant` = perusahaan 3PL yang pakai KargoPath (default: PT. Kargopath Logistic Nusantara, id=1)
+- `Tenant` = perusahaan 3PL yang pakai KargoPath
 - `Company` = client/customer dari tenant
 - `User.tenant` wajib, `User.company` opsional
 
-**Client Types:**
-- `company` = entitas bisnis formal, wajib company email + NPWP + NIB/SIUP
-- `personal_business` = perorangan potensial, perlu sales review
-
 **Auth flow:**
 1. Register/Login → backend return `{user, tenant, access, refresh}`
-2. `AuthContext` simpan ke localStorage, fetch full profile setelah dapat token
-3. JWT access token: 1 hari, refresh: 7 hari
+2. Frontend simpan ke localStorage, expose via `useAuth()`
+3. `AuthContext` fetch full profile setelah dapat token
 
 **Draft quotation flow:**
 1. Guest isi form → `POST /api/v1/quotations/requests/save-draft/` → dapat `draft_key`
@@ -127,17 +104,20 @@ Database (SQLite dev / PostgreSQL prod)
 
 ```
 backend/
-  users/views.py           — Auth views, JWT serializer
-  users/serializers.py     — Registration, profile serializers
-  users/urls.py            — Auth URL routing
+  users/models.py          — User, Tenant, Company, ClientProfile
+  users/serializers.py     — UserRegistrationSerializer
+  users/views.py           — RegisterView, CustomTokenObtainPairSerializer
+  quotations/views.py      — QuotationRequestViewSet (draft flow)
+  quotations/models.py     — QuotationRequest, Quotation, QuotationItem
+  config/settings.py       — DRF settings, middleware
 
 frontend/src/
-  components/DashboardLayout.jsx  — Shared layout (sidebar + topbar + dropdown)
-  context/AuthContext.jsx         — login, register, logout, user/tenant state
-  api.js                          — Semua API calls
-  App.jsx                         — Route definitions
-  pages/DashboardPage.jsx         — Main dashboard
-  pages/RegisterPage.jsx          — 3-step registration
+  context/AuthContext.jsx  — login, register, logout, user/tenant state
+  api.js                   — semua API calls
+  components/DashboardLayout.jsx  — shared layout semua dashboard pages
+  pages/DashboardPage.jsx         — main dashboard (role-aware)
+  pages/QuotationsListPage.jsx    — list quotations (role-aware)
+  pages/RequestQuotePage.jsx      — form request quotation (SEDANG DIUBAH)
 ```
 
 ---
@@ -151,17 +131,17 @@ frontend/src/
 | D-003 | Default tenant: PT. Kargopath Logistic Nusantara (id=1) |
 | D-037 | 2 client types: `company` dan `personal_business` |
 | D-034 | Draft quotation flow untuk lead generation |
-
-Lihat `docs/decision_log.md` untuk detail lengkap.
+| D-038 | Login page: centered form, no sidebar, border-radius 0 |
+| D-039 | Dashboard: role-aware (staff vs client), staff dapat Tariffs + Django Admin |
 
 ---
 
-## Git Log Terakhir
+## Sample Data di Database
 
-```
-5efa2d8  feat: User dropdown in header - Edit Profile, Change Password, Sign Out
-ff163b5  feat: Shared DashboardLayout - all dashboard pages use consistent template
-1e8194b  feat: Dashboard - collapsible sidebar, compact corporate style
-fd0595c  fix: Import Tenant in serializers.py
-fc18d7d  fix: Fetch full profile after login/register so user name shows correctly
-```
+| Data | Status | Notes |
+|------|--------|-------|
+| Q-2026001-SGFCL | SENT | Sea FCL Jakarta→Singapore, siap di-accept |
+| Q-2026002-KLAIR | SENT | Air D2D Jakarta→KL, siap di-accept |
+| KP-20260523-C1CD | PENDING | Sea LCL Surabaya→Rotterdam, belum di-quote |
+| Q-2026003-LNDSBY | ACCEPTED | Land D2D Jakarta→Surabaya |
+| LP-2026-00001 | IN_TRANSIT | Shipment dengan 4 milestones |

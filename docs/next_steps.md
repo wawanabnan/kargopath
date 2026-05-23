@@ -1,139 +1,107 @@
 # KargoPath — Next Steps
 
-> **Last Updated:** 2026-05-22 11:39 WIB
-> **Konteks:** Fase 1 (Multi-Tenant Foundation) sudah selesai. Semua 9 tenant isolation tests PASS.
+> **Last Updated:** 2026-05-23
+> **Fase aktif:** Fase 3 — Client Portal & Core App
 
 ---
 
-## ✅ Prioritas 1: Selesaikan Fase 1 — COMPLETE
+## ✅ Fase 1 & 2 — SELESAI
 
-### Completed Items
-- [x] Created tariffs migration: `tariffs/migrations/0001_initial.py`
-- [x] Applied tariffs migration successfully
-- [x] Fixed `test_tenant_isolation.py`
-- [x] Fixed URL routing for tariffs
-- [x] Added DRF pagination config
-- [x] Ran test suite: **9/9 PASSED**
-- [x] Committed & pushed: `0843354`
-
-### Verification Command
-```bash
-cd backend
-py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
-```
-
-Expected result:
-```text
-Ran 9 tests in ~42s
-OK
-```
+Lihat `docs/current_status.md` untuk detail lengkap.
 
 ---
 
-## Prioritas 2: Fase 2 — Backend API Refinement
+## 🔄 Fase 3 — Client Portal & Core App
 
-**Status:** 🔄 IN PROGRESS  
-**Fokus:** Backend foundation harus solid sebelum build UI
+### ✅ Selesai
+- DashboardLayout, DashboardPage (role-aware), QuotationsListPage, ShipmentsPage
+- ShipmentDetailPage, QuoteDetailPage, KYCPage, EditProfilePage, ChangePasswordPage
+- RegisterPage (corporate style), LoginPage (centered compact)
+- AuthContext (tenant-aware), api.js (draft flow)
 
-### Step 2.1 — JWT dengan Tenant Context ✅ SELESAI
-**Goal:** Token JWT harus include tenant information
+---
+
+### Step 3.1 — Modul Request Quotation 🔄 IN PROGRESS
+
+#### 3.1.1 — Redesign RequestQuotePage
+**Goal:** Sesuaikan style dengan dashboard (compact, border-radius 0, corporate)
+- [ ] Update `frontend/src/pages/RequestQuotePage.jsx`
+- [ ] Konsisten dengan RegisterPage & LoginPage style
+- [ ] Tetap support semua mode × scope matrix
+
+#### 3.1.2 — Master Data Location (Backend)
+**Goal:** Buat model dan API untuk data lokasi yang terstruktur
+
+**Models yang perlu dibuat** (`locations` app baru):
+```
+TransportMode     — Sea, Air, Land
+ServiceScope      — D2D, D2P, P2D, P2P
+Port              — kode IATA/UN/LOCODE, nama, kota, negara, tipe (SEA/AIR)
+City              — nama, provinsi, negara (untuk trucking)
+```
+
+**API Endpoints:**
+```
+GET /api/v1/locations/ports/?mode=sea        → list pelabuhan laut
+GET /api/v1/locations/ports/?mode=air        → list bandara
+GET /api/v1/locations/cities/               → list kota untuk trucking
+GET /api/v1/locations/ports/?search=jakarta → search
+```
 
 **Tasks:**
-- [x] Update `CustomTokenObtainPairView` untuk include tenant data di token
-- [x] Token response harus return: `user`, `tenant`, `access`, `refresh`
-- [x] Verify token payload contains tenant_id
-- [x] `RegisterView` return JWT token langsung setelah register
+- [ ] Buat Django app `locations`
+- [ ] Model `Port` (sea + air) dan `City`
+- [ ] Seed data: 13 pelabuhan utama Indonesia + 15 bandara + 80+ kota
+- [ ] ViewSet + serializer (public, no auth required)
+- [ ] Register URL di `config/urls.py`
 
-**Files:**
-- `users/views.py` - CustomTokenObtainPairSerializer, RegisterView ✅
-- `users/serializers.py` - auto-assign default tenant on register ✅
+#### 3.1.3 — Integrasi Frontend
+**Goal:** Form quotation pakai data dari API, bukan hardcoded list
 
-### Step 2.2 — Quotation Request Flow (Lead Generation) ✅ SELESAI
-**Goal:** Implement "draft quotation" untuk support lead generation strategy
-
-**Flow:**
-1. User isi form quotation (public, tanpa login)
-2. `POST /api/v1/quotations/requests/save-draft/` → simpan ke Django session, return `draft_key`
-3. Saat submit → redirect ke register/login (frontend handle)
-4. Setelah register/login → `POST /api/v1/quotations/requests/submit-draft/` dengan `draft_key`
-5. Draft otomatis tersimpan sebagai `QuotationRequest`
-
-**Files:**
-- `quotations/views.py` - `save_draft()` dan `submit_draft()` actions ✅
-- `config/settings.py` - tambah `SessionAuthentication` ✅
-
-**Files:**
-- `quotations/views.py` - Add draft endpoints
-- `quotations/serializers.py` - Draft serializer
-- Frontend: RequestQuotePage.jsx (nanti, setelah backend ready)
-
-### Step 2.3 — Bug Fix: Auto-create Shipment ✅ SELESAI
-**Issue:** `quotations/views.py` line 139-144 membuat Shipment tanpa `tenant`
-
-**Fix applied:**
-```python
-Shipment.objects.create(
-    tenant=quotation.request.tenant,  # ← FIXED
-    ...
-)
-```
-
-**File:** `quotations/views.py` - QuotationViewSet.accept() ✅
-
-### Step 2.4 — Verify Tenant Filtering di Semua Endpoints
-**Goal:** Pastikan semua API endpoint filter by tenant dengan benar
-
-**Checklist:**
-- [x] QuotationRequest - ✅ sudah filter by tenant
-- [x] Quotation - ✅ sudah filter by tenant
-- [x] Shipment - ✅ sudah filter by tenant
-- [x] Tariff - ✅ sudah filter by tenant
-- [ ] User management endpoints (jika ada)
-- [ ] Document upload endpoints
+- [ ] `api.js` — tambah `locationsAPI`
+- [ ] `RequestQuotePage` — replace hardcoded SEA_PORTS, AIR_PORTS, ID_CITIES dengan API call
+- [ ] Searchable dropdown yang load dari backend
 
 ---
 
-## Prioritas 3: Fase 3 — Client Portal/Dashboard
+### Step 3.2 — Quotation Management (Staff)
 
-**Status:** 🔄 IN PROGRESS
+- [ ] Staff bisa buat Quotation dari QuotationRequest (form + line items)
+- [ ] Assign sales ke request (UI di QuoteDetailPage)
+- [ ] Send quotation ke client
+- [ ] Update request status
 
-### Selesai:
-- [x] DashboardPage — compact corporate style, collapsible sidebar
-- [x] DashboardLayout — shared layout component untuk semua dashboard pages
-- [x] User dropdown (avatar pojok kanan atas) — Edit Profile, Change Password, Sign Out
-- [x] RegisterPage — corporate style, 2 client types
-- [x] QuotationsListPage — list semua quotation requests
-- [x] KYCPage — form verifikasi dokumen
-- [x] EditProfilePage — edit profil user
-- [x] ChangePasswordPage — ganti password
+### Step 3.3 — Tariffs Management
 
-### Masih perlu dikerjakan:
-- [ ] QuoteDetailPage — detail quotation, tombol accept/reject
-- [ ] ShipmentDetailPage — detail shipment + milestones
-- [ ] ShipmentsPage — list shipments
+- [ ] `TariffsPage` (`/dashboard/tariffs`) — list, create, edit tariff
+- [ ] Search by route (mode, origin, destination)
 
-### Tidak dikerjakan (deferred):
-- ~~Public tracking page~~ — dikerjakan TERAKHIR setelah quotation → booking → shipment flow selesai
+### Step 3.4 — Shipment Management (Staff)
+
+- [ ] Update shipment status
+- [ ] Add milestone
+- [ ] Upload document
+
+### Step 3.5 — Public Tracking (TERAKHIR)
+
+- [ ] Public page tanpa login
+- [ ] Search by shipment number atau AWB/BL
 
 ---
 
 ## Command Reference
 
-```bash
-# Python
-py -3 manage.py runserver          # Start backend dev server
-py -3 manage.py makemigrations     # Create migrations
-py -3 manage.py migrate            # Run migrations
-py -3 manage.py test               # Run all tests
-py -3 manage.py createsuperuser    # Create admin user
-py -3 manage.py shell              # Django shell
+```powershell
+# Backend
+py -3 manage.py runserver
+py -3 manage.py makemigrations
+py -3 manage.py migrate
+py -3 manage.py test users.tests.test_tenant_isolation --verbosity=2
 
 # Frontend
-cd frontend
-npm run dev                        # Start frontend dev server (port 5173)
+npm run dev   # dari folder frontend
 
 # Git
-git status
 git log --oneline -5
-git add . && git commit -m "message" && git push origin main
+git add .; git commit -m "message"; git push origin main
 ```
