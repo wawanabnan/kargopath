@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Company, ClientProfile, FREE_EMAIL_DOMAINS
+from .models import Company, ClientProfile, Tenant, FREE_EMAIL_DOMAINS
 
 User = get_user_model()
 
