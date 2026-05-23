@@ -33,21 +33,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         email = value.lower()
         client_type = self.initial_data.get('client_type', '')
 
-        # Business AND Corporate clients MUST use a company (non-free) email
-        if client_type in ('business', 'corporate'):
+        # Company clients MUST use a company (non-free) email
+        if client_type == 'company':
             domain = email.split('@')[1]
             if domain in FREE_EMAIL_DOMAINS:
                 raise serializers.ValidationError(
-                    f"Business and Corporate accounts require a company email address "
+                    f"Company accounts require a company email address "
                     f"(e.g. @yourcompany.com). Free providers like @{domain} are not accepted."
                 )
         return email
 
     def validate_company_name(self, value):
         client_type = self.initial_data.get('client_type', '')
-        if client_type in ('business', 'corporate') and not value:
+        if client_type == 'company' and not value:
             raise serializers.ValidationError(
-                'Company name is required for Business and Corporate accounts.'
+                'Company name is required for Company accounts.'
             )
         return value
 
@@ -62,9 +62,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         phone        = validated_data.pop('phone', '')
         client_type  = validated_data.get('client_type')
 
-        # Create or find company if Business/Corporate
+        # Create or find company if Company type
         company = None
-        if client_type in ('business', 'corporate') and company_name:
+        if client_type == 'company' and company_name:
             company, _ = Company.objects.get_or_create(name=company_name)
 
         # Assign to default tenant (id=1 — PT. Kargopath Logistic Nusantara)

@@ -13,38 +13,28 @@ const FREE_DOMAINS = new Set([
 
 const CLIENT_TYPES = [
   {
-    id: 'individual',
-    icon: <User className="w-7 h-7" />,
-    label: 'Individual',
-    sub: 'Personal / Freelancer',
-    desc: 'Importing or exporting goods as a private person or sole trader.',
-    emailNote: 'Personal email (Gmail, etc.) accepted.',
-    color: 'sky',
-  },
-  {
-    id: 'business',
-    icon: <Briefcase className="w-7 h-7" />,
-    label: 'Business / SME',
-    sub: 'CV, UD, PT Kecil',
-    desc: 'Small or medium business with moderate shipping volume.',
+    id: 'company',
+    icon: <Building2 className="w-7 h-7" />,
+    label: 'Company',
+    sub: 'CV, PT, Corporate, BUMN',
+    desc: 'Registered business entity with formal company documents.',
     emailNote: 'Company email required (e.g. @yourcompany.com).',
     color: 'blue',
   },
   {
-    id: 'corporate',
-    icon: <Building2 className="w-7 h-7" />,
-    label: 'Corporate',
-    sub: 'PT Tbk, MNC, BUMN',
-    desc: 'Enterprise or large company with high-volume logistics needs.',
-    emailNote: 'Company email required (e.g. @yourcompany.com).',
-    color: 'indigo',
+    id: 'personal_business',
+    icon: <User className="w-7 h-7" />,
+    label: 'Personal Business',
+    sub: 'Freelancer, Trader, Reseller',
+    desc: 'No formal company entity, but active as a shipping client. Subject to sales review.',
+    emailNote: 'Personal email (Gmail, etc.) accepted.',
+    color: 'sky',
   },
 ];
 
 const COLOR = {
-  sky:    { border: 'border-sky-500',    bg: 'bg-sky-50',    text: 'text-sky-700',    ring: 'ring-sky-200'    },
-  blue:   { border: 'border-blue-500',   bg: 'bg-blue-50',   text: 'text-blue-700',   ring: 'ring-blue-200'   },
-  indigo: { border: 'border-indigo-500', bg: 'bg-indigo-50', text: 'text-indigo-700', ring: 'ring-indigo-200' },
+  sky:  { border: 'border-sky-500',  bg: 'bg-sky-50',  text: 'text-sky-700',  ring: 'ring-sky-200'  },
+  blue: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-200' },
 };
 
 const inputClass = "w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400";
@@ -86,11 +76,11 @@ export default function RegisterPage() {
   const validateStep2 = () => {
     setError('');
     if (!form.email) { setError('Email is required.'); return false; }
-    if (form.client_type === 'business' || form.client_type === 'corporate') {
+    if (form.client_type === 'company') {
       const domain = form.email.split('@')[1]?.toLowerCase();
       if (domain && FREE_DOMAINS.has(domain)) {
         setError(
-          `Business and Corporate accounts require a company email address. ` +
+          `Company accounts require a company email address. ` +
           `Free providers like @${domain} are not accepted.`
         );
         return false;
@@ -104,8 +94,8 @@ export default function RegisterPage() {
   const validateStep3 = () => {
     setError('');
     if (!form.first_name.trim()) { setError('First name is required.'); return false; }
-    if (form.client_type !== 'individual' && !form.company_name.trim()) {
-      setError('Company name is required for Business and Corporate accounts.');
+    if (form.client_type === 'company' && !form.company_name.trim()) {
+      setError('Company name is required for Company accounts.');
       return false;
     }
     return true;
@@ -152,10 +142,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans overflow-x-hidden">
       {/* Background */}
       <div className="absolute top-0 left-0 w-full h-72 bg-gradient-to-br from-blue-700 to-sky-500 z-0" />
-      <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/3 translate-x-1/3 blur-3xl z-0" />
+      <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl z-0 overflow-hidden" />
 
       <div className="w-full max-w-lg z-10">
         {/* Back to home */}
@@ -265,22 +255,22 @@ export default function RegisterPage() {
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 mb-1">Set Your Credentials</h2>
                 <p className="text-sm text-slate-500 font-medium mb-6">
-                  {form.client_type !== 'individual'
-                    ? '⚠️ Business and Corporate accounts require a company email address.'
-                    : 'Use your primary email to sign in to KargoPath.'}
+                  {form.client_type === 'company'
+                    ? '⚠️ Company accounts require a company email address.'
+                    : 'Personal email (Gmail, etc.) is accepted for Personal Business accounts.'}
                 </p>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">
                       Email Address
-                      {form.client_type !== 'individual' && (
-                        <span className="ml-2 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Company email required</span>
+                      {form.client_type === 'company' && (
+                        <span className="ml-2 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Company email required</span>
                       )}
                     </label>
                     <div className="relative">
                       <IconWrap><Mail className="w-5 h-5" /></IconWrap>
                       <input required type="email" value={form.email} onChange={set('email')}
-                        placeholder={form.client_type !== 'individual' ? 'you@yourcompany.com' : 'you@example.com'}
+                        placeholder={form.client_type === 'company' ? 'you@yourcompany.com' : 'you@example.com'}
                         autoComplete="email" className={inputClass} />
                     </div>
                   </div>
@@ -355,14 +345,14 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {form.client_type !== 'individual' && (
+                  {form.client_type === 'company' && (
                     <>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Company Name *</label>
                         <div className="relative">
                           <IconWrap><Building2 className="w-5 h-5" /></IconWrap>
                           <input required type="text" value={form.company_name} onChange={set('company_name')}
-                            placeholder={form.client_type === 'corporate' ? 'PT Logistik Nusantara Tbk' : 'CV Karya Mandiri'}
+                            placeholder="PT Logistik Nusantara"
                             className={inputClass} />
                         </div>
                       </div>
@@ -384,9 +374,8 @@ export default function RegisterPage() {
                       <p className="text-xs text-amber-700 font-medium leading-relaxed">
                         You can request quotations right away. To accept a booking and create shipments,
                         you'll need to complete identity verification in your profile settings.
-                        {form.client_type === 'individual' && ' Requires: KTP/Passport + phone.'}
-                        {form.client_type === 'business' && ' Requires: NPWP + NIB/SIUP + phone.'}
-                        {form.client_type === 'corporate' && ' Requires: NPWP + NIB + company docs.'}
+                        {form.client_type === 'company' && ' Requires: NPWP + NIB/SIUP + company email.'}
+                        {form.client_type === 'personal_business' && ' Personal Business accounts require sales review before booking is enabled.'}
                       </p>
                     </div>
                   </div>

@@ -177,7 +177,13 @@
 - **Alasan:** Fokus ke backend dulu, frontend polish nanti
 - **Impact:** Development priority: Backend API → Quotation flow → Client portal
 
-### D-036: Development Priority Sequence
+### D-037: Client Type — 2 Tipe
+- **Tanggal:** 2026-05-23
+- **Keputusan:**
+  - **Company** = entitas bisnis formal (CV, PT, Corporate, BUMN) — standard client, wajib company email + NPWP + NIB/SIUP
+  - **Personal Business** = perorangan potensial tanpa entitas bisnis formal — boleh pakai personal email, perlu sales review sebelum booking diaktifkan
+- **Alasan:** Tidak menutup peluang dari personal yang potensial menjadi client, tapi tetap ada proses peninjauan
+- **Impact:** `CLIENT_TYPE_CHOICES` diubah dari 3 tipe (`individual`, `business`, `corporate`) menjadi 2 tipe (`company`, `personal_business`). Migration `users/0004` dibuat.
 - **Tanggal:** 2026-05-22
 - **Keputusan:**
   1. Backend API refinement (JWT, tenant context, bug fixes)

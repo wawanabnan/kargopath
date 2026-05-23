@@ -81,9 +81,8 @@ class User(AbstractUser):
     )
 
     CLIENT_TYPE_CHOICES = (
-        ('individual', 'Individual / Personal'),
-        ('business',   'Business / SME'),
-        ('corporate',  'Corporate / Enterprise'),
+        ('company',          'Company / Corporate'),
+        ('personal_business', 'Personal Business'),
     )
 
     KYC_LEVEL_CHOICES = (
@@ -93,7 +92,7 @@ class User(AbstractUser):
     )
 
     role        = models.CharField(max_length=10, choices=ROLE_CHOICES, default='CLIENT')
-    client_type = models.CharField(max_length=15, choices=CLIENT_TYPE_CHOICES, null=True, blank=True)
+    client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, null=True, blank=True)
     kyc_level   = models.IntegerField(choices=KYC_LEVEL_CHOICES, default=1)
     company     = models.ForeignKey(
         Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='users'
@@ -131,10 +130,12 @@ class User(AbstractUser):
                 missing.append('Phone number')
             if not profile.address:
                 missing.append('Full address')
-            if self.client_type == 'individual':
+            if self.client_type == 'personal_business':
+                # Personal Business: KTP/Passport required, no company docs
                 if not profile.id_number:
                     missing.append('ID number (KTP/Passport)')
             else:
+                # Company: NPWP + NIB/SIUP required
                 if not profile.npwp:
                     missing.append('NPWP')
                 if not profile.nib_siup:
