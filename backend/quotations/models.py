@@ -261,8 +261,9 @@ class Quotation(models.Model):
 
     def recalculate_totals(self):
         """Recompute subtotal, tax, and grand total from line items."""
+        from decimal import Decimal
         self.subtotal   = sum(i.amount for i in self.items.all())
-        self.tax_amount = (self.subtotal - self.discount) * (self.tax_rate / 100)
+        self.tax_amount = (self.subtotal - self.discount) * (self.tax_rate / Decimal('100'))
         self.grand_total = self.subtotal - self.discount + self.tax_amount
         self.save(update_fields=['subtotal', 'tax_amount', 'grand_total', 'updated_at'])
 
