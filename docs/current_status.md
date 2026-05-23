@@ -1,14 +1,15 @@
 # KargoPath — Current Status
 
-> **Last Updated:** 2026-05-22 11:39 WIB
+> **Last Updated:** 2026-05-22 16:07 WIB
 > **Updated By:** AI Assistant (Antigravity)
-> **Cara Pakai:** Jika chat terputus, minta AI baca file ini + `next_steps.md` + `decision_log.md` untuk melanjutkan.
+> **Cara Pakai:** Jika chat terputus, baca `docs/handoff_checkpoint.md` terlebih dahulu, lalu `next_steps.md` + `decision_log.md` jika butuh detail.
+> **Fast Recovery:** `docs/handoff_checkpoint.md` adalah ringkasan cepat agar AI/Human berikutnya tidak perlu membaca semua dokumen dari nol.
 
 ---
 
 ## Fase Saat Ini
 
-**Fase 1: Multi-Tenant Foundation** — ✅ 100% SELESAI
+**Fase 2: Backend API Refinement** — 🔄 IN PROGRESS
 
 ---
 
@@ -37,6 +38,10 @@
 - [x] `quotations/serializers.py` — auto-set tenant on create
 - [x] `tariffs/serializers.py` — auto-set tenant on create
 - [x] `shipments/serializers.py` — auto-set tenant on create
+- [x] `users/views.py` — `RegisterView` return JWT token langsung setelah register
+- [x] `users/views.py` — `CustomTokenObtainPairSerializer` include tenant context di JWT payload & response
+- [x] `users/serializers.py` — `UserRegistrationSerializer.create()` auto-assign default tenant
+- [x] `quotations/views.py` — `accept()` bug fix: Shipment dibuat dengan `tenant=quotation.request.tenant`
 
 ### Backend — Middleware & Admin
 - [x] `users/middleware.py` — TenantMiddleware dibuat
@@ -48,7 +53,7 @@
 
 ### Backend — Testing
 - [x] `users/tests/test_tenant_isolation.py` dibuat (9 test cases, 277 baris)
-- [x] ✅ **9/9 tests PASSING** — All tenant isolation tests successful!
+- [x] ✅ **10/10 tests PASSING** — Fase 2 Step 2.1 & 2.3 selesai, semua tests passing!
 
 ### Frontend
 - [x] Landing page B2B-focused dengan proper 3PL terminology

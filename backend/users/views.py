@@ -17,10 +17,41 @@ User = get_user_model()
 
 
 class RegisterView(generics.CreateAPIView):
-    """POST /api/v1/auth/register/ — Public, no auth."""
+    """
+    POST /api/v1/auth/register/ — Public, no auth.
+    Returns JWT tokens immediately after registration so the client
+    does not need a separate login call.
+    """
     queryset           = User.objects.all()
     permission_classes = [permissions.AllowAny]
     serializer_class   = UserRegistrationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # Issue JWT tokens right away
+        token = CustomTokenObtainPairSerializer.get_token(user)
+        return Response({
+            'user': {
+                'id':          user.id,
+                'email':       user.email,
+                'first_name':  user.first_name,
+                'last_name':   user.last_name,
+                'role':        user.role,
+                'client_type': user.client_type,
+                'kyc_level':   user.kyc_level,
+            },
+            'tenant': {
+                'id':            user.tenant_id,
+                'name':          user.tenant.name,
+                'slug':          user.tenant.slug,
+                'primary_color': user.tenant.primary_color,
+            },
+            'access':  str(token.access_token),
+            'refresh': str(token),
+        }, status=status.HTTP_201_CREATED)
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
@@ -86,7 +117,7 @@ class KYCStatusView(APIView):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Extend JWT payload with user role, kyc_level, and client_type."""
+    """Extend JWT payload with user, tenant, role, kyc_level, and client_type."""
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -96,6 +127,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['client_type'] = user.client_type or ''
         token['kyc_level']   = user.kyc_level
         token['company']     = user.company.name if user.company else ''
+        token['tenant_id']   = user.tenant_id
+        token['tenant_slug'] = user.tenant.slug
+        token['tenant_name'] = user.tenant.name
         return token
 
     def validate(self, attrs):
@@ -110,6 +144,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'kyc_level':         self.user.kyc_level,
             'can_accept_booking': self.user.can_accept_booking,
             'company':           self.user.company.name if self.user.company else '',
+        }
+        data['tenant'] = {
+            'id':            self.user.tenant_id,
+            'name':          self.user.tenant.name,
+            'slug':          self.user.tenant.slug,
+            'primary_color': self.user.tenant.primary_color,
         }
         return data
 

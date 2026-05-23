@@ -35,17 +35,18 @@ OK
 **Status:** 🔄 IN PROGRESS  
 **Fokus:** Backend foundation harus solid sebelum build UI
 
-### Step 2.1 — JWT dengan Tenant Context
+### Step 2.1 — JWT dengan Tenant Context ✅ SELESAI
 **Goal:** Token JWT harus include tenant information
 
 **Tasks:**
-- [ ] Update `CustomTokenObtainPairView` untuk include tenant data di token
-- [ ] Token response harus return: `user`, `tenant`, `access`, `refresh`
-- [ ] Verify token payload contains tenant_id
+- [x] Update `CustomTokenObtainPairView` untuk include tenant data di token
+- [x] Token response harus return: `user`, `tenant`, `access`, `refresh`
+- [x] Verify token payload contains tenant_id
+- [x] `RegisterView` return JWT token langsung setelah register
 
 **Files:**
-- `users/views.py` - CustomTokenObtainPairView
-- `users/serializers.py` - Token serializer (jika ada)
+- `users/views.py` - CustomTokenObtainPairSerializer, RegisterView ✅
+- `users/serializers.py` - auto-assign default tenant on register ✅
 
 ### Step 2.2 — Quotation Request Flow (Lead Generation)
 **Goal:** Implement "draft quotation" untuk support lead generation strategy
@@ -67,21 +68,18 @@ OK
 - `quotations/serializers.py` - Draft serializer
 - Frontend: RequestQuotePage.jsx (nanti, setelah backend ready)
 
-### Step 2.3 — Bug Fix: Auto-create Shipment
+### Step 2.3 — Bug Fix: Auto-create Shipment ✅ SELESAI
 **Issue:** `quotations/views.py` line 139-144 membuat Shipment tanpa `tenant`
 
-**Fix:**
+**Fix applied:**
 ```python
 Shipment.objects.create(
-    tenant=quotation.request.tenant,  # ← ADD THIS
-    shipment_number=shipment_num,
-    quotation=quotation,
-    client=quotation.request.submitted_by,
-    status='BOOKED'
+    tenant=quotation.request.tenant,  # ← FIXED
+    ...
 )
 ```
 
-**File:** `quotations/views.py` - QuotationViewSet.accept()
+**File:** `quotations/views.py` - QuotationViewSet.accept() ✅
 
 ### Step 2.4 — Verify Tenant Filtering di Semua Endpoints
 **Goal:** Pastikan semua API endpoint filter by tenant dengan benar

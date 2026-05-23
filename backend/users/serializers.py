@@ -67,6 +67,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         if client_type in ('business', 'corporate') and company_name:
             company, _ = Company.objects.get_or_create(name=company_name)
 
+        # Assign to default tenant (id=1 — PT. Kargopath Logistic Nusantara)
+        # New client registrations always go to the default tenant.
+        # In a full multi-tenant setup, this would be determined by subdomain/invite.
+        default_tenant = Tenant.objects.get(id=1)
+
         user = User.objects.create_user(
             email       = validated_data['email'],
             password    = validated_data['password'],
@@ -76,6 +81,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             client_type = client_type,
             kyc_level   = 1,
             company     = company,
+            tenant      = default_tenant,
         )
 
         # Auto-create ClientProfile with available data
