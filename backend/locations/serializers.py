@@ -1,16 +1,32 @@
 from rest_framework import serializers
-from .models import Port, City
+from .models import Location, LocationKind
 
 
-class PortSerializer(serializers.ModelSerializer):
-    display_label = serializers.ReadOnlyField()
+class LocationSerializer(serializers.ModelSerializer):
+    full_path = serializers.ReadOnlyField()
 
     class Meta:
-        model  = Port
-        fields = ('id', 'code', 'name', 'city', 'province', 'country', 'country_code', 'port_type', 'display_label')
+        model  = Location
+        fields = (
+            'id', 'code', 'name', 'display_name', 'kind',
+            'iata_code', 'unlocode', 'country_code',
+            'latitude', 'longitude',
+            'parent', 'full_path',
+        )
 
 
-class CitySerializer(serializers.ModelSerializer):
+class LocationSelectSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for dropdown/select use in forms."""
+    label = serializers.SerializerMethodField()
+
     class Meta:
-        model  = City
-        fields = ('id', 'name', 'province', 'country', 'country_code')
+        model  = Location
+        fields = ('id', 'code', 'name', 'display_name', 'kind',
+                  'iata_code', 'unlocode', 'country_code', 'label')
+
+    def get_label(self, obj):
+        """Return display label appropriate for the location kind."""
+        code = obj.iata_code or obj.unlocode or obj.code
+        if code and code != obj.name:
+            return f'{code} – {obj.name}'
+        return obj.display_name or obj.name
