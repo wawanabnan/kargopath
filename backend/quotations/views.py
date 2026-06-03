@@ -1,16 +1,18 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 import uuid
 
-from .models import QuotationRequest, Quotation, QuotationItem
+from .models import QuotationRequest, Quotation, QuotationItem, ChargeMaster
 from .serializers import (
     QuotationRequestSerializer,
     QuotationSerializer,
     QuotationItemSerializer,
+    ChargeMasterSerializer,
 )
 
 
@@ -33,20 +35,26 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
         user = self.request.user
         tenant = user.tenant
         
-        if user.role in ('ADMIN', 'SALES', 'OPS'):
+        if user.role in ('ADMIN', 'OPS'):
             qs = QuotationRequest.objects.filter(tenant=tenant).select_related(
                 'submitted_by', 'submitted_by__company', 'sales_in_charge'
             )
-            # Optional filter by status
             status_filter = self.request.query_params.get('status')
             if status_filter:
                 qs = qs.filter(status=status_filter.upper())
             return qs
+
+        if user.role == 'SALES':
+            # Sales only sees requests assigned to them
+            return QuotationRequest.objects.filter(
+                tenant=tenant, sales_in_charge=user
+            ).select_related('submitted_by', 'submitted_by__company', 'sales_in_charge')
+
         # Client sees only their own
         return QuotationRequest.objects.filter(tenant=tenant, submitted_by=user)
 
     def perform_create(self, serializer):
-        serializer.save(submitted_by=self.request.user, status='PENDING')
+        serializer.save(submitted_by=self.request.user, status='INQUIRY')
 
     @action(
         detail=False, methods=['post'],
@@ -98,7 +106,7 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        quotation_request = serializer.save(submitted_by=request.user, status='PENDING')
+        quotation_request = serializer.save(submitted_by=request.user, status='INQUIRY')
 
         # Clean up session after successful submit
         del request.session[session_key]
@@ -113,13 +121,23 @@ class QuotationRequestViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated])
     def assign_sales(self, request, pk=None):
         """Assign sales in charge to a request (Admin only)."""
-        if request.user.role != 'ADMIN':
+        if request.user.role not in ('ADMIN', 'SALES'):
             return Response({'detail': 'Permission denied.'}, status=403)
         obj = self.get_object()
         sales_id = request.data.get('sales_id')
-        obj.sales_in_charge_id = sales_id
-        obj.save(update_fields=['sales_in_charge'])
-        return Response({'detail': 'Sales assigned successfully.'})
+        if not sales_id:
+            return Response({'detail': 'sales_id is required.'}, status=400)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            sales_user = User.objects.get(id=sales_id, tenant=request.user.tenant, role='SALES')
+        except User.DoesNotExist:
+            return Response({'detail': 'Sales user not found or is an Admin.'}, status=404)
+        obj.sales_in_charge = sales_user
+        obj.status = 'ASSIGNED'
+        obj.save(update_fields=['sales_in_charge', 'status'])
+        display = f"{sales_user.first_name} {sales_user.last_name}".strip() or sales_user.email.split('@')[0]
+        return Response({'detail': 'Sales assigned successfully.', 'sales_display': display, 'sales_id': sales_user.id})
 
     @action(detail=True, methods=['patch'],
             permission_classes=[permissions.IsAuthenticated])
@@ -168,6 +186,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Auto-generate quotation number when Sales creates a quotation."""
+        if self.request.user.role != 'SALES':
+            raise PermissionDenied('Only SALES can create quotations.')
         q_num = f"Q-{timezone.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:4].upper()}"
         quotation = serializer.save(
             created_by=self.request.user,
@@ -177,6 +197,22 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # Update related request status to QUOTED
         quotation.request.status = 'QUOTED'
         quotation.request.save(update_fields=['status'])
+        quotation.recalculate_totals()
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        # Pricing fields can only be updated by SALES before price lock.
+        pricing_fields = {'discount_type', 'discount', 'tax_rate', 'currency'}
+        touching_pricing = any(
+            field in serializer.validated_data for field in pricing_fields
+        )
+        if touching_pricing:
+            if self.request.user.role != 'SALES':
+                raise PermissionDenied('Only SALES can update quotation pricing.')
+            if instance.is_price_locked:
+                raise PermissionDenied('Quotation price is locked after shipment booking.')
+        serializer.save()
+        instance.recalculate_totals()
 
     @action(detail=True, methods=['post'],
             permission_classes=[permissions.IsAuthenticated])
@@ -207,6 +243,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
             client=quotation.request.submitted_by,
             status='BOOKED'
         )
+        quotation.is_price_locked = True
+        quotation.save(update_fields=['is_price_locked', 'updated_at'])
         
         return Response({'detail': 'Quotation accepted. Shipment draft created successfully.'})
 
@@ -229,10 +267,15 @@ class QuotationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'],
             permission_classes=[permissions.IsAuthenticated])
     def send_to_client(self, request, pk=None):
-        """Sales marks the quotation as SENT."""
-        if request.user.role not in ('ADMIN', 'SALES'):
+        """Sales marks the quotation as SENT. Rejects if total is zero."""
+        if request.user.role != 'SALES':
             return Response({'detail': 'Permission denied.'}, status=403)
         quotation = self.get_object()
+        if float(quotation.grand_total) <= 0:
+            return Response(
+                {'detail': 'Cannot send quotation with zero total. Add charges first.'},
+                status=400,
+            )
         quotation.status = 'SENT'
         quotation.save(update_fields=['status'])
         return Response({'detail': 'Quotation sent to client.'})
@@ -258,16 +301,53 @@ class QuotationItemViewSet(viewsets.ModelViewSet):
             quotation_id=self.kwargs['quotation_pk']
         )
 
+    def _validate_pricing_mutation(self, quotation):
+        if self.request.user.role != 'SALES':
+            raise PermissionDenied('Only SALES can update quotation prices.')
+        if quotation.is_price_locked:
+            raise PermissionDenied('Quotation price is locked after shipment booking.')
+
     def perform_create(self, serializer):
         quotation = get_object_or_404(Quotation, pk=self.kwargs['quotation_pk'])
-        item = serializer.save(quotation=quotation)
+        self._validate_pricing_mutation(quotation)
+        item = serializer.save(quotation=quotation, tenant=quotation.tenant)
         quotation.recalculate_totals()
 
     def perform_update(self, serializer):
+        self._validate_pricing_mutation(serializer.instance.quotation)
         item = serializer.save()
         item.quotation.recalculate_totals()
 
     def perform_destroy(self, instance):
         quotation = instance.quotation
+        self._validate_pricing_mutation(quotation)
         instance.delete()
         quotation.recalculate_totals()
+
+
+class ChargeMasterViewSet(viewsets.ModelViewSet):
+    """
+    Manage reusable charge templates per tenant.
+    - ADMIN: full CRUD
+    - SALES: read-only
+    """
+    serializer_class = ChargeMasterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return ChargeMaster.objects.filter(tenant=self.request.user.tenant)
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can create charge masters.')
+        serializer.save(tenant=self.request.user.tenant)
+
+    def perform_update(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can update charge masters.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can delete charge masters.')
+        instance.delete()

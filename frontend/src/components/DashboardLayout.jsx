@@ -36,6 +36,9 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
   const [userMenu, setUserMenu]   = useState(false);
   const userMenuRef               = useRef(null);
 
+  const sidebarW = collapsed ? 'w-14' : 'w-52';
+  const sidebarML = collapsed ? 'lg:ml-14' : 'lg:ml-52';
+
   useEffect(() => {
     const handler = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenu(false);
@@ -77,14 +80,34 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
           </Link>
         );
       })}
-      {/* Admin-only Django admin link */}
-      {isStaff && user?.role === 'ADMIN' && (mobile || !collapsed) && (
+
+      {/* Admin-only links */}
+      {isStaff && user?.role === 'ADMIN' && (
         <>
           <div className="my-2 border-t border-slate-800" />
-          <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Admin</p>
+          {(!mobile && !collapsed) && <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Admin</p>}
+          <Link to="/settings"
+            title={!mobile && collapsed ? 'Settings' : undefined}
+            onClick={onClose}
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
+              !mobile && collapsed ? 'justify-center' : ''
+            } ${location.pathname === '/settings' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            <Settings className="w-4 h-4 flex-shrink-0" />
+            {(mobile || !collapsed) && 'Settings'}
+          </Link>
+          <Link to="/settings/charge-masters"
+            title={!mobile && collapsed ? 'Charge Master' : undefined}
+            onClick={onClose}
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
+              !mobile && collapsed ? 'justify-center' : ''
+            } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            <DollarSign className="w-4 h-4 flex-shrink-0" />
+            {(mobile || !collapsed) && 'Charge Master'}
+          </Link>
           <a href="http://127.0.0.1:8000/admin/" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-3 px-2 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors mb-0.5">
-            <Settings className="w-4 h-4 flex-shrink-0" /> Django Admin
+            title={!mobile && collapsed ? 'Django Admin' : undefined}
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors mb-0.5 ${!mobile && collapsed ? 'justify-center' : ''}`}>
+            <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> {(mobile || !collapsed) && 'Django Admin'}
           </a>
         </>
       )}
@@ -92,11 +115,13 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 flex font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-gray-100 font-sans">
 
-      {/* ── Sidebar (desktop) ── */}
-      <aside className={`hidden lg:flex flex-col flex-shrink-0 bg-slate-900 transition-all duration-200 ${collapsed ? 'w-14' : 'w-52'}`}>
-        <div className={`h-12 flex items-center border-b border-slate-800 ${collapsed ? 'justify-center px-0' : 'px-4 gap-2'}`}>
+      {/* ── Sidebar (desktop) — FIXED position ── */}
+      <aside className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-slate-900 z-20 transition-all duration-200 ${sidebarW}`}>
+
+        {/* Logo + Collapse button */}
+        <div className={`h-12 flex-shrink-0 flex items-center border-b border-slate-800 ${collapsed ? 'justify-center px-0' : 'px-4 gap-2'}`}>
           {collapsed
             ? <Package className="w-4 h-4 text-blue-400" />
             : <Link to="/" className="flex items-center gap-2">
@@ -104,29 +129,43 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
                 <span className="text-white font-bold tracking-tight text-sm">KargoPath</span>
               </Link>
           }
+          {!collapsed && (
+            <button onClick={() => setCollapsed(true)}
+              title="Collapse sidebar"
+              className="ml-auto text-slate-500 hover:text-white transition-colors">
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
+          {collapsed && (
+            <button onClick={() => setCollapsed(false)}
+              title="Expand sidebar"
+              className="text-slate-500 hover:text-white transition-colors">
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <nav className="flex-1 px-2 py-3">
+        {/* Nav — scrollable middle section */}
+        <nav className="flex-1 px-2 py-3 overflow-y-auto min-h-0">
           <NavLinks />
         </nav>
 
-        <div className="px-2 py-3 border-t border-slate-800">
-          <button onClick={() => setCollapsed(c => !c)}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`w-full flex items-center gap-3 px-2 py-2 text-xs text-slate-600 hover:bg-slate-800 hover:text-white transition-colors ${collapsed ? 'justify-center' : ''}`}>
+        {/* Copyright — always visible at bottom */}
+        <div className="flex-shrink-0 px-3 py-3 border-t border-slate-800">
+          <p className="text-[10px] text-slate-600 text-center leading-tight">
             {collapsed
-              ? <PanelLeftOpen className="w-4 h-4" />
-              : <><PanelLeftClose className="w-4 h-4" /><span>Collapse</span></>
+              ? '© 2026'
+              : '© 2026 KargoPath'
             }
-          </button>
+          </p>
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+      {/* ── Main content — offset by sidebar width ── */}
+      <div className={`flex flex-col min-h-screen transition-all duration-200 ${sidebarML}`}>
 
         {/* Top bar */}
-        <header className="bg-white border-b border-slate-200 px-5 lg:px-6 h-12 flex items-center justify-between flex-shrink-0">
+        <header className="bg-white border-b border-slate-200 px-5 lg:px-6 h-12 flex items-center justify-between flex-shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button className="lg:hidden text-slate-500" onClick={() => setMobileNav(true)}>
               <Menu className="w-4 h-4" />
@@ -159,6 +198,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
                     <p className="text-xs font-bold text-slate-800 truncate">{displayName}</p>
                     <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                     <p className="text-xs text-blue-600 font-semibold mt-0.5">{displayRole}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{user?.preferred_currency || 'IDR'}</p>
                   </div>
                   <div className="py-1">
                     <Link to="/profile/edit" onClick={() => setUserMenu(false)}
@@ -200,7 +240,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <nav className="flex-1 px-2 py-3">
+            <nav className="flex-1 px-2 py-3 overflow-y-auto min-h-0">
               <NavLinks mobile onClose={() => setMobileNav(false)} />
             </nav>
             <div className="px-2 py-3 border-t border-slate-800">

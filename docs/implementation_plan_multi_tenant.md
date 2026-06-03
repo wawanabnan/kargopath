@@ -1,5 +1,7 @@
 # Fase 1: Fondasi Multi-Tenant dengan tenant_id
 
+> **ARCHIVE NOTICE (Read First):** Dokumen ini adalah plan historis. Untuk status dan aturan aktif, gunakan `docs/README.md`, `docs/handoff_checkpoint.md`, `docs/business_rules.md`, dan `docs/decision_log.md`.
+
 ## Tujuan
 
 Mempersiapkan KargoPath untuk arsitektur SaaS multi-tenant dengan menambahkan isolasi tenant di layer database. Ini memungkinkan beberapa perusahaan 3PL menggunakan instance KargoPath yang sama dengan pemisahan data yang lengkap, sambil mempertahankan fungsionalitas single-tenant saat ini.

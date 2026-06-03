@@ -1,5 +1,13 @@
 # KargoPath - Product Requirements Document (PRD)
 
+> **DEVELOPER HANDOFF:** Jika Anda baru mengambil alih proyek ini, baca **`docs/handoff_checkpoint.md`** terlebih dahulu untuk status saat ini, kredensial, dan instruksi run.
+>
+> **Documentation Governance (Wajib):**
+> - Status/progress: `docs/handoff_checkpoint.md`
+> - Business rules operasional: `docs/business_rules.md`
+> - Keputusan arsitektur/desain: `docs/decision_log.md`
+> - PRD ini: visi produk, module scope, roadmap (high-level)
+
 ## 1. Overview
 Platform manajemen logistik berbasis web yang menghubungkan tim internal (Sales, Ops, Admin) dengan klien (Shipper) dalam satu portal terpadu.
 

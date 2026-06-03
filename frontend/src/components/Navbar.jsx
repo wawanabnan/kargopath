@@ -59,14 +59,16 @@ export default function Navbar() {
                 return (
                   <Link key={to} to={to}
                     className={`text-sm font-semibold transition-colors duration-300 ${
-                      active
-                        ? 'text-blue-600'
-                        : dark
-                          ? 'text-white/75 hover:text-white'
-                          : 'text-slate-600 hover:text-blue-600'
+                      active && dark
+                        ? 'text-white'
+                        : active
+                          ? 'text-blue-600'
+                          : dark
+                            ? 'text-white/75 hover:text-white'
+                            : 'text-slate-600 hover:text-blue-600'
                     }`}>
                     {label}
-                    {active && <div className="h-0.5 bg-blue-600 mt-0.5" />}
+                    {active && !dark && <div className="h-0.5 bg-blue-600 mt-0.5" />}
                   </Link>
                 );
               })}

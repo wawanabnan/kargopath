@@ -1,5 +1,7 @@
 # KargoPath - Implementation Plans Index
 
+> **ARCHIVE NOTICE (Read First):** Folder `plans/` bersifat referensi historis. Jangan gunakan sebagai sumber kebenaran utama. Ikuti urutan dokumen di `docs/README.md`.
+
 Dokumen ini berisi daftar lengkap semua implementation plans yang telah dibuat untuk project KargoPath. Setiap plan mencakup detail teknis, perubahan yang diusulkan, dan rencana verifikasi.
 
 ---

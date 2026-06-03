@@ -125,7 +125,7 @@ export const quotationRequestAPI = {
     body: JSON.stringify({ status }),
   }),
 
-  // Draft flow — for lead generation (public user fills form, submits after login)
+  // Draft flow
   saveDraft: (data) => request('/quotations/requests/save-draft/', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -134,6 +134,11 @@ export const quotationRequestAPI = {
   submitDraft: (draftKey) => request('/quotations/requests/submit-draft/', {
     method: 'POST',
     body: JSON.stringify({ draft_key: draftKey }),
+  }),
+
+  assignSales: (id, salesId) => request(`/quotations/requests/${id}/assign_sales/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ sales_id: salesId }),
   }),
 };
 
@@ -148,6 +153,11 @@ export const quotationAPI = {
 
   create: (data) => request('/quotations/', {
     method: 'POST',
+    body: JSON.stringify(data),
+  }),
+
+  update: (id, data) => request(`/quotations/${id}/`, {
+    method: 'PATCH',
     body: JSON.stringify(data),
   }),
 
@@ -173,11 +183,41 @@ export const quotationAPI = {
   }),
 };
 
+export const chargeMasterAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/charge-masters/${qs ? '?' + qs : ''}`);
+  },
+  create: (data) => request('/charge-masters/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id, data) => request(`/charge-masters/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  remove: (id) => request(`/charge-masters/${id}/`, { method: 'DELETE' }),
+};
+
+// ── Users API ───────────────────────────────────────────────────────────────────
+export const usersAPI = {
+  salesUsers: () => request('/auth/sales-users/'),
+  getTenantSettings: () => request('/auth/tenant/settings/'),
+  updateTenantSettings: (data) => request('/auth/tenant/settings/', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+};
+
 // ── Locations API (public, no auth) ──────────────────────────────────────────
 export const locationsAPI = {
-  ports: (params = {}) => {
+  seaPorts: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
-    return request(`/locations/ports/${qs ? '?' + qs : ''}`);
+    return request(`/locations/sea-ports/${qs ? '?' + qs : ''}`);
+  },
+  airports: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/locations/airports/${qs ? '?' + qs : ''}`);
   },
   cities: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -203,6 +243,17 @@ export const shipmentAPI = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+};
+
+// ── Public Tracking (no auth needed) ───────────────────────────────────────────
+export const trackingAPI = {
+  track: async (awb) => {
+    const url = `${BASE_URL}/public/tracking/?awb=${encodeURIComponent(awb)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw { status: res.status, ...data };
+    return data;
+  },
 };
 
 export default request;

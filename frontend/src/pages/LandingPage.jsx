@@ -30,42 +30,40 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="font-sans text-slate-900 bg-slate-50">
+    <div className="font-roboto text-slate-800 bg-gray-50">
 
-      {/* ── HERO (SaaS Style) ────────────────────────────────────────── */}
-      <section className="pt-32 pb-24 bg-slate-900 relative overflow-hidden">
-        {/* Decorative Background Pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-radial from-blue-500/20 to-transparent"></div>
+      {/* ── HERO ────────────────────────────────────────── */}
+      <section className="min-h-screen flex items-center bg-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/kargopath_ex1.jpg"
+            alt=""
+            className="w-full h-full object-cover opacity-80"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/60 via-blue-900/30 to-blue-950/60"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto">
             
-            <div className="inline-block px-3 py-1 bg-blue-600/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest mb-8">
-              KargoPath Logistics OS
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6 leading-tight">
+            <h1 className="font-oswald text-3xl md:text-5xl font-bold tracking-wide text-white mb-6 leading-tight uppercase">
               Integrated Cargo Solutions.<br />
-              <span className="text-blue-500">Powered by Tech.</span>
+              <span className="text-xl md:text-2xl font-bold text-white">Powered by Tech.</span>
             </h1>
             
-            <p className="text-lg text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-sm md:text-base text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
               Combining decades of logistics expertise with advanced technology to deliver your cargo faster and safer. We manage your shipments across Sea, Air, and Land seamlessly from a single centralized dashboard.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to={isAuthenticated ? '/dashboard' : '/register'}
-                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold transition-all backdrop-blur-sm">
+                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-slate-100 text-slate-900 font-bold transition-all">
                 {isAuthenticated ? 'Go to Dashboard' : 'Try Platform Now'}
               </Link>
               <Link to="/quote"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold transition-all backdrop-blur-sm">
+                className="inline-flex items-center justify-center px-8 py-4 border border-white/30 text-white hover:bg-white/10 font-bold transition-all">
                 Request Quotation
               </Link>
             </div>
@@ -73,8 +71,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATISTICS SECTION ───────────────────────────────────────── */}
-      <section className="py-16 bg-white border-b border-slate-200">
+      {/* ── STATISTICS ───────────────────────────────────────── */}
+      <section className="py-16 bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
@@ -85,8 +83,8 @@ export default function LandingPage() {
             ].map(stat => (
               <div key={stat.label} className="space-y-3">
                 <div className="text-4xl">{stat.icon}</div>
-                <div className="text-4xl md:text-5xl font-extrabold text-blue-600">{stat.number}</div>
-                <div className="text-sm font-medium text-slate-600">{stat.label}</div>
+                <div className="text-4xl md:text-5xl font-extrabold text-slate-800">{stat.number}</div>
+                <div className="text-sm font-medium text-slate-500">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -94,13 +92,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── CORE 3PL SERVICES ────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-t border-slate-200">
+      <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-16 text-center max-w-3xl mx-auto">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
               Complete 3PL Solutions
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            <h2 className="font-montserrat text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               Comprehensive Logistics Services for Your Business
             </h2>
             <p className="text-lg text-slate-500">
@@ -130,13 +128,13 @@ export default function LandingPage() {
               },
             ].map(s => (
               <Link key={s.title} to={s.link} className="group">
-                <div className="bg-slate-50 p-10 border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all h-full">
+                <div className="bg-white p-10 border border-slate-200 hover:border-slate-400 hover:shadow-lg transition-all h-full">
                   <span className="text-4xl block mb-6">{s.icon}</span>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-slate-700 transition-colors">
                     {s.title}
                   </h3>
                   <p className="text-slate-600 leading-relaxed mb-4">{s.desc}</p>
-                  <span className="text-blue-600 font-semibold text-sm group-hover:underline">
+                  <span className="text-slate-700 font-semibold text-sm group-hover:underline">
                     Learn More →
                   </span>
                 </div>
@@ -148,7 +146,7 @@ export default function LandingPage() {
             <p className="text-sm text-slate-500 mb-4">
               <strong className="text-slate-700">B2B Focused:</strong> Our services are designed for companies and business professionals, not retail customers.
             </p>
-            <Link to="/services" className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5">
+            <Link to="/services" className="inline-flex items-center gap-2 px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all">
               View All Services →
             </Link>
           </div>
@@ -156,13 +154,16 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY CHOOSE US ────────────────────────────────────────────── */}
-      <section className="py-24 bg-slate-900 text-white">
+      <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              Why KargoPath
+            </p>
+            <h2 className="font-montserrat text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               Why Leading Companies Choose KargoPath
             </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
               We're not just another freight forwarder. We're your logistics technology partner.
             </p>
           </div>
@@ -200,10 +201,10 @@ export default function LandingPage() {
                 desc: 'Average quotation time: 3 hours. Average support response: 15 minutes. We value your time.'
               },
             ].map((item, idx) => (
-              <div key={idx} className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-blue-500 transition-colors">
+              <div key={idx} className="bg-slate-50 p-8 border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all">
                 <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                <p className="text-slate-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -211,13 +212,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── INDUSTRIES SERVED ────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-t border-slate-200">
+      <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
               Industries We Serve
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            <h2 className="font-montserrat text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               Trusted by Leading Industries
             </h2>
             <p className="text-lg text-slate-500 max-w-2xl mx-auto">
@@ -236,21 +237,24 @@ export default function LandingPage() {
               { icon: '🚗', title: 'Automotive', desc: 'Parts & vehicle logistics' },
               { icon: '📦', title: 'Import/Export', desc: 'International trade' },
             ].map(industry => (
-              <div key={industry.title} className="bg-slate-50 p-6 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all text-center">
+              <div key={industry.title} className="bg-white p-6 border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all text-center">
                 <div className="text-4xl mb-3">{industry.icon}</div>
                 <h3 className="font-bold text-slate-900 mb-2">{industry.title}</h3>
-                <p className="text-sm text-slate-600">{industry.desc}</p>
+                <p className="text-sm text-slate-500">{industry.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FITUR UNGGULAN (Pain Points Solver) ──────────────────────── */}
-      <section className="py-24 bg-slate-50 border-t border-slate-200">
+      {/* ── FITUR UNGGULAN ──────────────────────────────────────── */}
+      <section className="py-24 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-16 text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">The Future of Logistics</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              Platform Features
+            </p>
+            <h2 className="font-montserrat text-3xl font-bold text-slate-900 mb-4">The Future of Logistics</h2>
             <p className="text-lg text-slate-500">
               KargoPath is designed specifically to eliminate inefficiencies in traditional freight forwarding.
             </p>
@@ -285,12 +289,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── INTEGRASI & KEPERCAYAAN ──────────────────────────────────── */}
-      <section className="py-16 bg-white border-t border-slate-200">
+      <section className="py-16 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-8">Your Cargo is in Good Hands</p>
-          <div className="flex flex-wrap justify-center gap-8 opacity-60 grayscale">
+          <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale">
             {['IATA', 'FIATA', 'GAFEKSI', 'BEA CUKAI RI'].map(brand => (
-              <div key={brand} className="px-6 py-3 border-2 border-slate-300 font-bold text-slate-600 text-sm tracking-widest uppercase">
+              <div key={brand} className="px-6 py-3 border-2 border-slate-300 font-bold text-slate-500 text-sm tracking-widest uppercase">
                 {brand}
               </div>
             ))}
@@ -298,17 +302,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FAQ SECTION ──────────────────────────────────────────────── */}
-      <section id="faq" className="py-24 bg-slate-50 border-t border-slate-200">
+      {/* ── FAQ ──────────────────────────────────────────────── */}
+      <section id="faq" className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <h2 className="font-montserrat text-3xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
             <p className="text-lg text-slate-500">Quick answers to common questions about our 3PL services.</p>
           </div>
           
           <div className="space-y-4">
             {FAQS.map((faq, idx) => (
-              <div key={idx} className="bg-white border border-slate-200 p-6 rounded-xl">
+              <div key={idx} className="bg-white border border-slate-200 p-6">
                 <h4 className="text-lg font-bold text-slate-900 mb-2">{faq.q}</h4>
                 <p className="text-slate-600 leading-relaxed">{faq.a}</p>
               </div>
@@ -316,23 +320,23 @@ export default function LandingPage() {
           </div>
           
           <div className="text-center mt-8">
-            <Link to="/faq" className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline text-lg">
+            <Link to="/faq" className="inline-flex items-center gap-2 text-slate-700 font-semibold hover:underline text-lg">
               View All FAQs →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── CTA BAND ─────────────────────────────────────────────────── */}
-      <section className="bg-slate-900 py-24">
+      {/* ── CTA ─────────────────────────────────────────────────── */}
+      <section className="bg-white border-t border-slate-100 py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">Ready to Transform Your Freight Operations?</h2>
-          <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto">
+          <h2 className="font-montserrat text-4xl font-bold text-slate-900 mb-6">Ready to Transform Your Freight Operations?</h2>
+          <p className="text-slate-500 text-lg mb-10 max-w-2xl mx-auto">
             Join the first digital 3PL platform designed for maximum efficiency in Indonesia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to={isAuthenticated ? '/dashboard' : '/register'}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors">
+              className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all">
               {isAuthenticated ? 'Go to Dashboard' : 'Create Free Account'}
             </Link>
           </div>

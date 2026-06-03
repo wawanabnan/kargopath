@@ -9,42 +9,56 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // Verify token on mount
+  const fetchProfile = async () => {
+    if (!getAccessToken()) return null;
+    try {
+      const profile = await authAPI.getProfile();
+      // Merge preferred_currency from login payload if nested
+      if (profile.preferred_currency || profile.profile?.preferred_currency) {
+        profile.preferred_currency = profile.preferred_currency || profile.profile.preferred_currency;
+      }
+      return profile;
+    } catch {
+      clearAuth();
+      setUser(null);
+      setTenant(null);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const verify = async () => {
       if (getAccessToken()) {
-        try {
-          const profile = await authAPI.getProfile();
-          setUser(profile);
-        } catch {
-          clearAuth();
-          setUser(null);
-          setTenant(null);
-        }
+        const profile = await fetchProfile();
+        if (profile) setUser(profile);
       }
       setLoading(false);
     };
     verify();
   }, []);
 
+  const saveProfile = (profile) => {
+    setUser(profile);
+    localStorage.setItem('user', JSON.stringify(profile));
+  };
+
   const login = async (email, password) => {
     const data = await authAPI.login(email, password);
     saveAuth({ access: data.access, refresh: data.refresh, user: data.user, tenant: data.tenant });
     setUser(data.user);
     setTenant(data.tenant);
-    // Fetch full profile to get company, profile, etc.
+    // Fetch full profile to get company, profile, preferred_currency, etc.
     try {
-      const profile = await authAPI.getProfile();
-      setUser(profile);
-      localStorage.setItem('user', JSON.stringify(profile));
+      const profile = await fetchProfile();
+      if (profile) saveProfile(profile);
     } catch {}
     return data.user;
   };
 
   const refreshUser = async () => {
     try {
-      const profile = await authAPI.getProfile();
-      setUser(profile);
-      localStorage.setItem('user', JSON.stringify(profile));
+      const profile = await fetchProfile();
+      if (profile) saveProfile(profile);
     } catch {}
   };
 
@@ -53,11 +67,10 @@ export function AuthProvider({ children }) {
     saveAuth({ access: data.access, refresh: data.refresh, user: data.user, tenant: data.tenant });
     setUser(data.user);
     setTenant(data.tenant);
-    // Fetch full profile to get company, profile, etc.
+    // Fetch full profile to get company, profile, preferred_currency, etc.
     try {
-      const profile = await authAPI.getProfile();
-      setUser(profile);
-      localStorage.setItem('user', JSON.stringify(profile));
+      const profile = await fetchProfile();
+      if (profile) saveProfile(profile);
     } catch {}
     return data.user;
   };

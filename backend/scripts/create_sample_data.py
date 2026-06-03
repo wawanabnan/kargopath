@@ -21,12 +21,13 @@ User   = get_user_model()
 tenant = Tenant.objects.get(id=1)
 sales  = User.objects.get(email='sales@kargopath.com')
 ops    = User.objects.get(email='ops@kargopath.com')
-client = User.objects.get(email='it@dakarsh.co.id')
+client = User.objects.get(email='it@dakarash.co.id')
 
 def make_quotation(req, q_num, items_data, status='SENT', notes=''):
+    currency = req.cargo_currency or 'IDR'
     q = Quotation.objects.create(
         tenant=tenant, quotation_number=q_num, request=req, created_by=sales,
-        status=status, currency='IDR', discount_type='AMOUNT',
+        status=status, currency=currency, discount_type='AMOUNT',
         discount=Decimal('0'), tax_rate=Decimal('11'),
         valid_until=date.today() + timedelta(days=14), notes=notes,
     )
@@ -35,10 +36,10 @@ def make_quotation(req, q_num, items_data, status='SENT', notes=''):
         QuotationItem.objects.create(
             tenant=tenant, quotation=q, category=item['cat'],
             charge_name=item['name'], qty=qty, unit=item['unit'],
-            unit_price=price, amount=qty * price, currency='IDR',
+            unit_price=price, amount=qty * price, currency=currency,
         )
     q.recalculate_totals()
-    print(f"  ✓ {q.quotation_number} | {q.status} | IDR {q.grand_total:,.0f}")
+    print(f"  ✓ {q.quotation_number} | {q.status} | {currency} {q.grand_total:,.0f}")
     return q
 
 # ── Sample 2: Air D2D Jakarta → KL (SENT) ────────────────────────────────────
@@ -53,7 +54,7 @@ req2 = QuotationRequest.objects.create(
     commodity='Garment & Textile', hs_code='6204.62',
     package_type='Carton', package_qty=120,
     gross_weight=Decimal('850'), volume_cbm=Decimal('4.2'),
-    incoterms='DAP', cargo_value=Decimal('45000'), cargo_currency='USD',
+    incoterms='DAP', cargo_value=Decimal('45000'), cargo_currency='IDR',
     shipper_same_as_client=True,
     shipper_company='PT Dakarsh Indonesia', shipper_pic='Sari Dewi', shipper_phone='+62 812 9876 5432',
     consignee_company='Fashion House Malaysia Sdn Bhd', consignee_pic='Ahmad Razali', consignee_phone='+60 12 345 6789',
@@ -80,7 +81,7 @@ req3 = QuotationRequest.objects.create(
     commodity='Furniture & Home Decor', hs_code='9403.60',
     package_type='Crate', package_qty=35,
     gross_weight=Decimal('2800'), volume_cbm=Decimal('18.5'),
-    incoterms='CFR', cargo_value=Decimal('85000'), cargo_currency='USD',
+    incoterms='CFR', cargo_value=Decimal('85000'), cargo_currency='IDR',
     shipper_same_as_client=True,
     shipper_company='PT Dakarsh Indonesia', shipper_pic='Hendra Wijaya', shipper_phone='+62 31 8888 9999',
     consignee_company='Dutch Home Imports BV', consignee_pic='Jan van der Berg', consignee_phone='+31 10 123 4567',
@@ -99,7 +100,7 @@ req4 = QuotationRequest.objects.create(
     commodity='Industrial Machinery Parts',
     package_type='Pallet', package_qty=8,
     gross_weight=Decimal('3200'), volume_cbm=Decimal('12.0'),
-    incoterms='DAP', cargo_value=Decimal('120000'), cargo_currency='USD',
+    incoterms='DAP', cargo_value=Decimal('120000'), cargo_currency='IDR',
     shipper_same_as_client=True,
     shipper_company='PT Dakarsh Indonesia', shipper_pic='Rudi Hartono', shipper_phone='+62 21 3333 4444',
     consignee_company='PT Mesin Nusantara', consignee_pic='Pak Agus', consignee_phone='+62 31 7777 8888',

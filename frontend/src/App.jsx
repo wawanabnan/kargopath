@@ -21,9 +21,11 @@ import ShipmentDetailPage from './pages/ShipmentDetailPage';
 import EditProfilePage  from './pages/EditProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import QuotationsListPage from './pages/QuotationsListPage';
+import SettingsPage     from './pages/SettingsPage';
+import ChargeMasterPage from './pages/ChargeMasterPage';
 
 // Pages that render their own full-page layout (no shared Navbar)
-const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/profile'];
+const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/profile', '/settings'];
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -77,6 +79,8 @@ function Layout() {
         <Route path="/profile/verify"   element={<PrivateRoute><KYCPage /></PrivateRoute>} />
         <Route path="/profile/edit"     element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
         <Route path="/profile/change-password" element={<PrivateRoute><ChangePasswordPage /></PrivateRoute>} />
+        <Route path="/settings"              element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+        <Route path="/settings/charge-masters" element={<PrivateRoute><ChargeMasterPage /></PrivateRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,18 @@
 from rest_framework import serializers
-from .models import QuotationRequest, Quotation, QuotationItem, QuotationRequestCargoItem
+from .models import (
+    QuotationRequest,
+    Quotation,
+    QuotationItem,
+    QuotationRequestCargoItem,
+    ChargeMaster,
+)
+
+
+class ChargeMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChargeMaster
+        fields = '__all__'
+        read_only_fields = ('tenant', 'created_at', 'updated_at')
 
 
 class QuotationRequestCargoItemSerializer(serializers.ModelSerializer):
@@ -23,13 +36,34 @@ class QuotationRequestSerializer(serializers.ModelSerializer):
     submitted_by_email = serializers.EmailField(source='submitted_by.email', read_only=True)
     quotation_details = serializers.SerializerMethodField(read_only=True)
     cargo_items = QuotationRequestCargoItemSerializer(many=True, required=False)
+    sales_display = serializers.SerializerMethodField(read_only=True)
+    display_status = serializers.SerializerMethodField(read_only=True)
+
+    def get_display_status(self, obj):
+        user = self.context['request'].user
+        role = user.role
+        mapping = {
+            'INQUIRY': {'CLIENT': 'Under Review', 'SALES': 'New Inquiry', 'ADMIN': 'New Inquiry', 'OPS': 'New Inquiry'},
+            'ASSIGNED': {'CLIENT': 'Under Review', 'SALES': 'In Pricing', 'ADMIN': 'Assigned', 'OPS': 'Assigned'},
+            'QUOTED': {'CLIENT': 'Quoted', 'SALES': 'Quoted', 'ADMIN': 'Quoted', 'OPS': 'Quoted'},
+            'ACCEPTED': {'CLIENT': 'Accepted', 'SALES': 'Accepted', 'ADMIN': 'Accepted', 'OPS': 'Accepted'},
+            'REJECTED': {'CLIENT': 'Rejected', 'SALES': 'Rejected', 'ADMIN': 'Rejected', 'OPS': 'Rejected'},
+            'EXPIRED': {'CLIENT': 'Expired', 'SALES': 'Expired', 'ADMIN': 'Expired', 'OPS': 'Expired'},
+        }
+        return mapping.get(obj.status, {}).get(role, obj.status)
+
+    def get_sales_display(self, obj):
+        if not obj.sales_in_charge:
+            return None
+        u = obj.sales_in_charge
+        return f"{u.first_name} {u.last_name}".strip() or u.email.split('@')[0]
 
     class Meta:
         model = QuotationRequest
         fields = '__all__'
         read_only_fields = (
-            'reference_no', 'submitted_by', 'sales_in_charge',
-            'status', 'created_at', 'updated_at',
+            'tenant', 'reference_no', 'submitted_by', 'sales_in_charge',
+            'status', 'display_status', 'created_at', 'updated_at',
         )
 
     def get_quotation_details(self, obj):
@@ -53,15 +87,19 @@ class QuotationRequestSerializer(serializers.ModelSerializer):
         needs_delivery   = scope in ('d2d', 'p2d')
         needs_origin_port = scope in ('p2p', 'p2d')
         needs_dest_port  = scope in ('p2p', 'd2p')
+        is_sea_or_air    = mode in ('sea', 'air')
 
         # ── Origin validation ──────────────────────────────────────────────
         if needs_pickup and not data.get('pickup_address'):
             raise serializers.ValidationError(
                 {'pickup_address': 'Pickup address is required for Door to ... service scope.'}
             )
-        if needs_origin_port and not data.get('pol'):
+
+        # POL/POD is ALWAYS required for Sea/Air (per business rules),
+        # regardless of scope. For door scopes, user picks POL + types pickup address.
+        if is_sea_or_air and not data.get('pol'):
             raise serializers.ValidationError(
-                {'pol': 'Port/Airport of Loading (POL) is required for Port to ... service scope.'}
+                {'pol': 'Port/Airport of Loading (POL) is required for Sea/Air Freight.'}
             )
 
         # ── Destination validation ─────────────────────────────────────────
@@ -69,24 +107,39 @@ class QuotationRequestSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'delivery_address': 'Delivery address is required for ... to Door service scope.'}
             )
-        if needs_dest_port and not data.get('pod'):
+
+        if is_sea_or_air and not data.get('pod'):
             raise serializers.ValidationError(
-                {'pod': 'Port/Airport of Discharge (POD) is required for ... to Port service scope.'}
+                {'pod': 'Port/Airport of Discharge (POD) is required for Sea/Air Freight.'}
             )
 
-        # ── Shipper validation (only when pickup involved) ─────────────────
-        if needs_pickup and not data.get('shipper_same_as_client', True):
-            if not data.get('shipper_company'):
-                raise serializers.ValidationError(
-                    {'shipper_company': 'Shipper company name is required.'}
-                )
+        # ── Shipper validation (ALWAYS required per business rules) ────────
+        if not data.get('shipper_company'):
+            raise serializers.ValidationError(
+                {'shipper_company': 'Shipper company/contact name is required.'}
+            )
+        if not data.get('shipper_pic'):
+            raise serializers.ValidationError(
+                {'shipper_pic': 'Shipper PIC name is required.'}
+            )
+        if not data.get('shipper_phone'):
+            raise serializers.ValidationError(
+                {'shipper_phone': 'Shipper phone number is required.'}
+            )
 
-        # ── Consignee validation (only when delivery involved) ─────────────
-        if needs_delivery and not data.get('consignee_same_as_client', False):
-            if not data.get('consignee_company'):
-                raise serializers.ValidationError(
-                    {'consignee_company': 'Consignee company name is required.'}
-                )
+        # ── Consignee validation (ALWAYS required per business rules) ──────
+        if not data.get('consignee_company'):
+            raise serializers.ValidationError(
+                {'consignee_company': 'Consignee company/contact name is required.'}
+            )
+        if not data.get('consignee_pic'):
+            raise serializers.ValidationError(
+                {'consignee_pic': 'Consignee PIC name is required.'}
+            )
+        if not data.get('consignee_phone'):
+            raise serializers.ValidationError(
+                {'consignee_phone': 'Consignee phone number is required.'}
+            )
 
         # ── Sea-specific validation ────────────────────────────────────────
         if mode == 'sea':
@@ -195,7 +248,18 @@ class QuotationItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuotationItem
         fields = '__all__'
-        read_only_fields = ('amount',)
+        read_only_fields = ('amount', 'tenant', 'quotation',)
+
+    def validate(self, attrs):
+        charge_master = attrs.get('charge_master')
+        if charge_master:
+            attrs.setdefault('category', charge_master.category)
+            attrs.setdefault('charge_name', charge_master.name)
+            attrs.setdefault('unit', charge_master.default_unit)
+            attrs.setdefault('unit_price', charge_master.default_rate)
+            attrs.setdefault('currency', charge_master.default_currency)
+            attrs.setdefault('is_taxable', charge_master.taxable_default)
+        return attrs
 
 
 class QuotationSerializer(serializers.ModelSerializer):
@@ -207,16 +271,34 @@ class QuotationSerializer(serializers.ModelSerializer):
         source='request.submitted_by.company.name', read_only=True, default=''
     )
     request_details   = QuotationRequestSerializer(source='request', read_only=True)
+    discount_amount = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Quotation
         fields = '__all__'
         read_only_fields = (
-            'quotation_number', 'subtotal', 'tax_amount',
-            'grand_total', 'created_at', 'updated_at',
+            'tenant', 'quotation_number', 'subtotal', 'tax_amount',
+            'grand_total', 'created_at', 'updated_at', 'is_price_locked',
         )
+
+    def get_discount_amount(self, obj):
+        if obj.discount_type == 'PERCENT':
+            return float((obj.subtotal * obj.discount) / 100)
+        return float(obj.discount)
     
     def create(self, validated_data):
-        """Auto-set tenant from authenticated user."""
-        validated_data['tenant'] = self.context['request'].user.tenant
+        """Auto-set tenant and default financial settings."""
+        tenant = self.context['request'].user.tenant
+        validated_data['tenant'] = tenant
+
+        if not validated_data.get('tax_rate'):
+            validated_data['tax_rate'] = tenant.default_tax_rate
+        if not validated_data.get('discount'):
+            validated_data['discount'] = tenant.default_discount_value
+        if not validated_data.get('discount_type'):
+            default_map = {'percentage': 'PERCENT', 'nominal': 'AMOUNT'}
+            validated_data['discount_type'] = default_map.get(
+                tenant.default_discount_type,
+                'AMOUNT'
+            )
         return super().create(validated_data)

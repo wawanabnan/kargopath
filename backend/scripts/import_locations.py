@@ -1,9 +1,5 @@
 """
-Import location data from CSV.
-Format: id,code,name,kind,lft,rght,iata_code,unlocode,latitude,longitude,
-        parent_id,iso_code,postal_code,source,status,timezone,altitude,
-        country_code,display_name
-
+Import location data from location_full.csv.
 Run: py -3 scripts/import_locations.py
 """
 import os, sys, csv, django
@@ -12,18 +8,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+from django.db import transaction
 from locations.models import Location
 
-CSV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        'data', 'location.csv')
+CSV_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'data', 'location_full.csv'
+)
 
 def null(val):
-    """Convert backslash-N or empty string to None."""
     if val in ('\\N', '', None):
         return None
     return val
 
-def decimal_or_none(val):
+def to_decimal(val):
     v = null(val)
     if v is None:
         return None
@@ -34,98 +32,85 @@ def decimal_or_none(val):
 
 print(f"Reading: {CSV_PATH}")
 
-# ── Pass 1: Create all Location records (without parent) ──────────────────────
-id_to_code = {}   # original CSV id → code (for parent linking)
-created = 0
-skipped = 0
-
 with open(CSV_PATH, encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    rows = list(reader)
+    rows = list(csv.DictReader(f))
 
 print(f"Total rows: {len(rows)}")
 
+# ── Pass 1: insert all records in batches with explicit transaction ────────────
+id_to_code = {}
+BATCH = 500
+created_total = 0
+
+for i in range(0, len(rows), BATCH):
+    batch = rows[i:i+BATCH]
+    with transaction.atomic():
+        for row in batch:
+            csv_id = row['id'].strip().strip('"')
+            code   = row['code'].strip().strip('"')
+            id_to_code[csv_id] = code
+
+            Location.objects.update_or_create(
+                code=code,
+                defaults=dict(
+                    name         = row['name'].strip().strip('"'),
+                    display_name = null(row.get('display_name','').strip().strip('"')) or row['name'].strip().strip('"'),
+                    kind         = row['kind'].strip().strip('"'),
+                    iata_code    = null(row.get('iata_code','').strip().strip('"')),
+                    unlocode     = null(row.get('unlocode','').strip().strip('"')),
+                    latitude     = to_decimal(row.get('latitude','')),
+                    longitude    = to_decimal(row.get('longitude','')),
+                    iso_code     = null(row.get('iso_code','').strip().strip('"')),
+                    postal_code  = null(row.get('postal_code','').strip().strip('"')),
+                    source       = null(row.get('source','').strip().strip('"')),
+                    timezone     = null(row.get('timezone','').strip().strip('"')),
+                    country_code = null(row.get('country_code','').strip().strip('"')),
+                    status       = null(row.get('status','active').strip().strip('"')) or 'active',
+                    parent       = None,
+                )
+            )
+    created_total += len(batch)
+    print(f"  Processed {created_total}/{len(rows)}...")
+
+print(f"Pass 1 done — DB count: {Location.objects.count()}")
+
+# ── Pass 2: set parent FK ─────────────────────────────────────────────────────
+print("Pass 2: linking parents...")
+code_to_pk = dict(Location.objects.values_list('code', 'pk'))
+print(f"  code_to_pk size: {len(code_to_pk)}")
+
+updates = []
 for row in rows:
-    csv_id   = row['id'].strip().strip('"')
-    code     = row['code'].strip().strip('"')
-    name     = row['name'].strip().strip('"')
-    kind     = row['kind'].strip().strip('"')
-    status   = null(row.get('status', 'active').strip().strip('"')) or 'active'
-    iata     = null(row.get('iata_code', '').strip().strip('"'))
-    unlocode = null(row.get('unlocode', '').strip().strip('"'))
-    lat      = decimal_or_none(row.get('latitude', '').strip().strip('"'))
-    lng      = decimal_or_none(row.get('longitude', '').strip().strip('"'))
-    iso      = null(row.get('iso_code', '').strip().strip('"'))
-    postal   = null(row.get('postal_code', '').strip().strip('"'))
-    source   = null(row.get('source', '').strip().strip('"'))
-    tz       = null(row.get('timezone', '').strip().strip('"'))
-    cc       = null(row.get('country_code', '').strip().strip('"'))
-    disp     = null(row.get('display_name', '').strip().strip('"'))
+    csv_id    = row['id'].strip().strip('"')
+    code      = row['code'].strip().strip('"')
+    parent_id = null(row.get('parent_id','').strip().strip('"'))
 
-    id_to_code[csv_id] = code
+    if parent_id and parent_id in id_to_code:
+        parent_code = id_to_code[parent_id]
+        parent_pk   = code_to_pk.get(parent_code)
+        child_pk    = code_to_pk.get(code)
+        if parent_pk and child_pk:
+            updates.append((child_pk, parent_pk))
 
-    obj, was_created = Location.objects.update_or_create(
-        code=code,
-        defaults=dict(
-            name=name,
-            display_name=disp or name,
-            kind=kind,
-            iata_code=iata,
-            unlocode=unlocode,
-            latitude=lat,
-            longitude=lng,
-            iso_code=iso,
-            postal_code=postal,
-            source=source,
-            timezone=tz,
-            country_code=cc,
-            status=status,
-            parent=None,  # set in pass 2
-        )
-    )
-    if was_created:
-        created += 1
-    else:
-        skipped += 1
+print(f"  Linking {len(updates)} relationships...")
+for i in range(0, len(updates), BATCH):
+    batch = updates[i:i+BATCH]
+    with transaction.atomic():
+        for child_pk, parent_pk in batch:
+            Location.objects.filter(pk=child_pk).update(parent_id=parent_pk)
+    print(f"  Linked {min(i+BATCH, len(updates))}/{len(updates)}...")
 
-print(f"Pass 1 done — created: {created}, updated: {skipped}")
+print("Pass 2 done")
 
-# ── Pass 2: Set parent relationships ─────────────────────────────────────────
-linked = 0
-missing = 0
-
-with open(CSV_PATH, encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        csv_id    = row['id'].strip().strip('"')
-        code      = row['code'].strip().strip('"')
-        parent_id = null(row.get('parent_id', '').strip().strip('"'))
-
-        if parent_id and parent_id in id_to_code:
-            parent_code = id_to_code[parent_id]
-            try:
-                loc    = Location.objects.get(code=code)
-                parent = Location.objects.get(code=parent_code)
-                if loc.parent_id != parent.pk:
-                    loc.parent = parent
-                    loc.save(update_fields=['parent'])
-                linked += 1
-            except Location.DoesNotExist:
-                missing += 1
-        elif parent_id:
-            missing += 1
-
-print(f"Pass 2 done — linked: {linked}, missing parent: {missing}")
-
-# ── Rebuild MPTT tree ─────────────────────────────────────────────────────────
+# ── Rebuild MPTT ──────────────────────────────────────────────────────────────
 print("Rebuilding MPTT tree...")
 Location.objects.rebuild()
 print("Tree rebuilt.")
 
 print()
 print("=" * 50)
-print(f"Total locations: {Location.objects.count()}")
-for kind in Location.objects.values_list('kind', flat=True).distinct().order_by('kind'):
-    count = Location.objects.filter(kind=kind).count()
-    print(f"  {kind:20s}: {count}")
+print(f"Total: {Location.objects.count()}")
+from django.db.models import Count
+for item in Location.objects.values('kind').annotate(c=Count('id')).order_by('kind'):
+    print(f"  {item['kind']:20s}: {item['c']}")
 print("Done!")

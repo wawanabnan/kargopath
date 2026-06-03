@@ -1,8 +1,9 @@
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from .models import Shipment, ShipmentMilestone, ShipmentDocument
-from .serializers import ShipmentSerializer, ShipmentMilestoneSerializer, ShipmentDocumentSerializer
+from .serializers import ShipmentSerializer, ShipmentMilestoneSerializer, ShipmentDocumentSerializer, PublicTrackingSerializer
 
 class ShipmentViewSet(viewsets.ModelViewSet):
     serializer_class = ShipmentSerializer
@@ -46,7 +47,29 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             serializer.save(
                 shipment=shipment,
                 uploaded_by=request.user,
-                tenant=request.user.tenant,  # auto-set tenant
+                tenant=request.user.tenant,
             )
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def public_tracking(request):
+    """
+    Public tracking endpoint — no auth required.
+    GET /api/v1/public/tracking/?awb={shipment_number_or_awb}
+    """
+    awb = request.query_params.get('awb', '').strip()
+    if not awb:
+        return Response({'detail': 'Parameter "awb" is required.'}, status=400)
+
+    shipment = get_object_or_404(
+        Shipment.objects.select_related(
+            'quotation__request',
+            'quotation__request__submitted_by',
+        ).prefetch_related('milestones'),
+        shipment_number=awb,
+    )
+    serializer = PublicTrackingSerializer(shipment)
+    return Response(serializer.data)

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -17,11 +18,10 @@ class QuotationRequest(models.Model):
 
     # ── Status ──────────────────────────────────────────────────────────────
     STATUS_CHOICES = (
-        ('DRAFT',        'Draft'),
-        ('PENDING',      'Pending Review'),
+        ('INQUIRY',      'Inquiry'),
+        ('ASSIGNED',     'Assigned'),
         ('QUOTED',       'Quoted'),
         ('ACCEPTED',     'Accepted'),
-        ('REVISED',      'Revision Requested'),
         ('REJECTED',     'Rejected'),
         ('EXPIRED',      'Expired'),
     )
@@ -73,9 +73,9 @@ class QuotationRequest(models.Model):
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='handled_requests',
-        limit_choices_to={'role__in': ['ADMIN', 'SALES']},
+        limit_choices_to={'role': 'SALES'},
     )
-    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='INQUIRY')
 
     # ── Service Definition ───────────────────────────────────────────────────
     mode           = models.CharField(max_length=5, choices=MODE_CHOICES)
@@ -158,6 +158,47 @@ class QuotationRequest(models.Model):
     # ── Timestamps ────────────────────────────────────────────────────────────
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id and (not self.reference_no or self.reference_no.startswith('KP-') or self.reference_no == 'generate_ref'):
+            from django.db import transaction
+            
+            tenant = self.tenant
+            # 1. Prefix
+            prefix_str = tenant.qr_prefix if tenant and tenant.qr_prefix else 'Q'
+            
+            # 2. Date
+            date_fmt = tenant.qr_date_format if tenant and tenant.qr_date_format else 'YYMM'
+            now = timezone.now()
+            if date_fmt == 'MMYY':
+                date_str = now.strftime('%m%y')
+            else:
+                date_str = now.strftime('%y%m')
+                
+            # 3. System (Mode + Scope)
+            mode_code = {'sea': 'S', 'air': 'A', 'land': 'T'}.get(self.mode, 'X')
+            scope_code = self.scope.upper() if self.scope else 'XXX'
+            system_str = f"{mode_code}{scope_code}"
+            
+            prefix = f"{prefix_str}-{date_str}-{system_str}-"
+            seq_len = tenant.qr_seq_length if tenant and tenant.qr_seq_length else 4
+            
+            with transaction.atomic():
+                # Lock rows to prevent race condition during sequence generation
+                last_req = QuotationRequest.objects.select_for_update().filter(
+                    reference_no__startswith=prefix,
+                    tenant=tenant
+                ).order_by('-reference_no').first()
+                
+                if last_req:
+                    try:
+                        seq = int(last_req.reference_no.split('-')[-1]) + 1
+                    except ValueError:
+                        seq = 1
+                else:
+                    seq = 1
+                self.reference_no = f"{prefix}{str(seq).zfill(seq_len)}"
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['-created_at']
@@ -246,6 +287,7 @@ class Quotation(models.Model):
     tax_amount       = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     grand_total      = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     currency         = models.CharField(max_length=5, default='IDR')
+    is_price_locked  = models.BooleanField(default=False)
 
     valid_until      = models.DateField(null=True, blank=True)
     notes            = models.TextField(blank=True, null=True)
@@ -260,12 +302,66 @@ class Quotation(models.Model):
         return f"{self.quotation_number} – {self.status}"
 
     def recalculate_totals(self):
-        """Recompute subtotal, tax, and grand total from line items."""
-        from decimal import Decimal
-        self.subtotal   = sum(i.amount for i in self.items.all())
-        self.tax_amount = (self.subtotal - self.discount) * (self.tax_rate / Decimal('100'))
-        self.grand_total = self.subtotal - self.discount + self.tax_amount
+        """Recompute subtotal, discount, tax, and grand total from line items."""
+        self.subtotal = sum((i.amount for i in self.items.all()), Decimal("0"))
+
+        # Support discount as AMOUNT or PERCENT value.
+        if self.discount_type == 'PERCENT':
+            discount_amount = (self.subtotal * self.discount) / Decimal("100")
+        else:
+            discount_amount = self.discount
+        discount_amount = min(discount_amount, self.subtotal)
+
+        taxable_subtotal = sum(
+            (i.amount for i in self.items.filter(is_taxable=True)),
+            Decimal("0")
+        )
+        taxable_base = max(taxable_subtotal - discount_amount, Decimal("0"))
+        self.tax_amount = taxable_base * (self.tax_rate / Decimal("100"))
+        self.grand_total = self.subtotal - discount_amount + self.tax_amount
         self.save(update_fields=['subtotal', 'tax_amount', 'grand_total', 'updated_at'])
+
+
+class ChargeMaster(models.Model):
+    """Reusable charge template per tenant with default rate metadata."""
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='charge_masters'
+    )
+    code = models.CharField(max_length=30, blank=True, null=True)
+    category = models.CharField(
+        max_length=20,
+        choices=(
+            ('freight', 'Main Freight'),
+            ('trucking', 'Trucking'),
+            ('customs', 'Customs & Clearance'),
+            ('handling', 'Handling & THC'),
+            ('insurance', 'Insurance'),
+            ('other', 'Other Charges'),
+        ),
+        default='freight',
+    )
+    name = models.CharField(max_length=255)
+    default_unit = models.CharField(max_length=30, default='Lot')
+    default_rate = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    default_currency = models.CharField(max_length=5, default='IDR')
+    taxable_default = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tenant', 'name'],
+                name='uniq_charge_master_name_per_tenant'
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.default_currency} {self.default_rate})"
 
 
 class QuotationItem(models.Model):
@@ -288,11 +384,18 @@ class QuotationItem(models.Model):
 
     quotation    = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name='items')
     category     = models.CharField(max_length=20, choices=CHARGE_CATEGORIES, default='freight')
+    charge_master = models.ForeignKey(
+        'ChargeMaster',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='quotation_items',
+    )
     charge_name  = models.CharField(max_length=255, help_text="e.g., Ocean Freight, Origin THC, BAF")
     qty          = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     unit         = models.CharField(max_length=30, default='Lot', help_text="e.g., KG, CBM, Container, Lot")
     unit_price   = models.DecimalField(max_digits=14, decimal_places=2)
     amount       = models.DecimalField(max_digits=14, decimal_places=2)
+    is_taxable   = models.BooleanField(default=True)
     currency     = models.CharField(max_length=5, default='IDR')
     note         = models.CharField(max_length=255, blank=True, null=True)
 

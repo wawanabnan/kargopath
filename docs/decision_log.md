@@ -1,6 +1,6 @@
 # KargoPath — Decision Log
 
-> **Last Updated:** 2026-05-22 11:22 WIB
+> **Last Updated:** 2026-06-02
 > **Tujuan:** Mencatat semua keputusan arsitektur dan desain penting. Jika chat terputus, AI baca file ini untuk paham konteks tanpa perlu diskusi ulang.
 
 ---
@@ -125,6 +125,56 @@
 
 ---
 
+## Keputusan Dokumentasi & Pricing (2026-06-02)
+
+### D-040: Dokumentasi SSOT Tunggal
+- **Tanggal:** 2026-06-02
+- **Keputusan:**
+  - `docs/handoff_checkpoint.md` untuk status/progress.
+  - `docs/business_rules.md` untuk aturan bisnis operasional.
+  - `docs/decision_log.md` untuk keputusan arsitektur.
+  - `PRD.md` untuk visi/roadmap level tinggi.
+- **Alasan:** Menghilangkan duplikasi dan konflik antar dokumen.
+- **Impact:** Dokumen `plans/*.md` dan plan docs lain dianggap arsip referensi.
+
+### D-041: Charge Master Strategy
+- **Tanggal:** 2026-06-02
+- **Keputusan:** Charge memakai master per tenant dengan default rate, tetapi Sales boleh override saat membuat line item quotation.
+- **Alasan:** Menjaga kecepatan quoting dan fleksibilitas pricing.
+- **Impact:** Butuh model/entitas master charge dan snapshot ke line item quotation.
+
+### D-042: Tax as Line Attribute
+- **Tanggal:** 2026-06-02
+- **Keputusan:** Tax diperlakukan sebagai atribut line item (`taxable`) dan ditampilkan sebagai agregat total pada summary quotation.
+- **Alasan:** Secara bisnis lebih presisi dan secara UI tetap sederhana.
+- **Impact:** Kalkulasi tax harus berbasis taxable lines, bukan flat di semua line.
+
+### D-043: Price Lock After Shipment
+- **Tanggal:** 2026-06-02
+- **Keputusan:** Harga quotation tidak boleh diubah setelah shipment terbentuk (`BOOKED`).
+- **Alasan:** Menjaga audit trail dan konsistensi data komersial-operasional.
+- **Impact:** Endpoint update pricing harus memvalidasi lock state.
+
+### D-044: Admin Pricing Restriction
+- **Tanggal:** 2026-06-02
+- **Keputusan:** Admin tidak diizinkan update harga line item quotation.
+- **Alasan:** Memisahkan governance/admin controls dari pricing execution.
+- **Impact:** RBAC backend/frontend harus membatasi mutation pricing ke Sales saja.
+
+### D-045: Tax Calculation Formula
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Menggunakan prorata taxable base: `taxable_base = max(taxable_subtotal - discount_amount, 0)`. Discount diterapkan secara global, lalu sisa taxable base dikenakan tax.
+- **Alasan:** Paling sederhana dan intuitif untuk bisnis logistik. Discount mengurangi total tagihan, dan tax hanya dihitung dari sisa nilai taxable.
+- **Impact:** Implementasi di `Quotation.recalculate_totals()`.
+
+### D-046: Sales Override `is_taxable`
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Sales dapat mengubah flag `is_taxable` per line item pada quotation. ChargeMaster menyediakan `taxable_default` sebagai default, tetapi Sales memiliki wewenang override.
+- **Alasan:** Fleksibilitas pricing untuk kasus khusus (misal: biaya tertentu tidak kena PPN).
+- **Impact:** `QuotationItem.is_taxable` dapat diedit oleh Sales selama quotation belum di-price-lock.
+
+---
+
 ## Keputusan Arsitektur Lanjutan (2026-05-22 Sesi 2)
 
 ### D-030: KargoPath vs CMS - Produk Terpisah
@@ -169,13 +219,13 @@
 - **Impact:** Form quotation harus support "draft" state sebelum user register
 
 ### D-035: Public Pages - Status Saat Ini
-- **Tanggal:** 2026-05-22
+- **Tanggal:** 2026-05-22 (Updated: 2026-06-03)
 - **Keputusan:**
   - Public pages (landing, services, about) sudah cukup untuk sekarang
-  - **JANGAN diubah dulu** sampai backend siap
-  - Public tracking page belum bisa ditest (belum diimplementasi)
+  - Public tracking page sudah diimplementasi (backend + frontend)
+  - Backend API → Quotation flow → Client portal → Public tracking (selesai)
 - **Alasan:** Fokus ke backend dulu, frontend polish nanti
-- **Impact:** Development priority: Backend API → Quotation flow → Client portal
+- **Impact:** Development priority: Backend API → Quotation flow → Client portal → Public tracking
 
 ### D-037: Client Type — 2 Tipe
 - **Tanggal:** 2026-05-23

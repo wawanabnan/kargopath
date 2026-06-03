@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import CustomTokenObtainPairView
+from shipments.views import public_tracking
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,4 +17,7 @@ urlpatterns = [
     path('api/v1/shipments/', include('shipments.urls')),
     path('api/v1/tariffs/', include('tariffs.urls')),
     path('api/v1/locations/', include('locations.urls')),
+
+    # Public
+    path('api/v1/public/tracking/', public_tracking, name='public-tracking'),
 ]

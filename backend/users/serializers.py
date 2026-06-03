@@ -11,6 +11,22 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'tax_id', 'nib_siup', 'address', 'contact_number', 'website')
 
 
+class TenantSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenant
+        fields = [
+            'qr_prefix', 'qr_date_format', 'qr_seq_length',
+            'currencies', 'default_tax_rate', 'default_discount_type', 
+            'default_discount_value', 'quotation_agreement', 
+            'booking_terms', 'service_level_agreement'
+        ]
+
+    def validate_qr_prefix(self, value):
+        if value:
+            return value.upper()[:3]
+        return 'Q'
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True, min_length=8, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
@@ -107,6 +123,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     kyc_missing_fields   = serializers.ReadOnlyField()
     can_accept_booking   = serializers.ReadOnlyField()
     is_corporate_email   = serializers.ReadOnlyField()
+    preferred_currency   = serializers.SerializerMethodField()
 
     class Meta:
         model  = User
@@ -115,5 +132,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'role', 'client_type', 'kyc_level',
             'company', 'profile',
             'kyc_missing_fields', 'can_accept_booking', 'is_corporate_email',
+            'preferred_currency',
         )
         read_only_fields = ('email', 'role', 'kyc_level')
+
+    def get_preferred_currency(self, obj):
+        try:
+            return obj.profile.preferred_currency or 'IDR'
+        except Exception:
+            return 'IDR'

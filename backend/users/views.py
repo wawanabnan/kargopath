@@ -11,9 +11,49 @@ from .serializers import (
     UserRegistrationSerializer,
     UserProfileSerializer,
     ClientProfileSerializer,
+    TenantSettingsSerializer,
 )
 
 User = get_user_model()
+
+
+class SalesUsersView(APIView):
+    """GET /api/v1/auth/sales-users/ — Return list of SALES and ADMIN users (staff only)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('ADMIN', 'SALES', 'OPS'):
+            return Response({'detail': 'Permission denied.'}, status=403)
+        users = User.objects.filter(
+            tenant=request.user.tenant,
+            role='SALES',
+            is_active=True,
+        ).values('id', 'email', 'first_name', 'last_name', 'role')
+        data = [{
+            'id': u['id'],
+            'username': u['email'].split('@')[0],
+            'display': f"{u['first_name']} {u['last_name']}".strip() or u['email'].split('@')[0],
+            'email': u['email'],
+            'role': u['role'],
+        } for u in users]
+        return Response(data)
+
+
+class TenantSettingsView(generics.RetrieveUpdateAPIView):
+    """
+    GET|PATCH /api/v1/auth/tenant/settings/
+    Allows ADMIN to configure Tenant settings (e.g., Quotation Numbering Rules).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TenantSettingsSerializer
+
+    def get_object(self):
+        return self.request.user.tenant
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.role != 'ADMIN':
+            self.permission_denied(request, message="Only ADMIN can access tenant settings.")
 
 
 class RegisterView(generics.CreateAPIView):
@@ -33,6 +73,13 @@ class RegisterView(generics.CreateAPIView):
 
         # Issue JWT tokens right away
         token = CustomTokenObtainPairSerializer.get_token(user)
+        phone = ''
+        preferred_currency = 'IDR'
+        try:
+            phone = user.profile.phone or ''
+            preferred_currency = user.profile.preferred_currency or 'IDR'
+        except Exception:
+            pass
         return Response({
             'user': {
                 'id':          user.id,
@@ -42,6 +89,8 @@ class RegisterView(generics.CreateAPIView):
                 'role':        user.role,
                 'client_type': user.client_type,
                 'kyc_level':   user.kyc_level,
+                'phone':       phone,
+                'preferred_currency': preferred_currency,
             },
             'tenant': {
                 'id':            user.tenant_id,
@@ -165,16 +214,28 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
+        phone = ''
+        try:
+            phone = self.user.profile.phone or ''
+        except Exception:
+            pass
+        preferred_currency = 'IDR'
+        try:
+            preferred_currency = self.user.profile.preferred_currency or 'IDR'
+        except Exception:
+            pass
         data['user'] = {
-            'id':                self.user.id,
-            'email':             self.user.email,
-            'first_name':        self.user.first_name,
-            'last_name':         self.user.last_name,
-            'role':              self.user.role,
-            'client_type':       self.user.client_type,
-            'kyc_level':         self.user.kyc_level,
+            'id':                 self.user.id,
+            'email':              self.user.email,
+            'first_name':         self.user.first_name,
+            'last_name':          self.user.last_name,
+            'role':               self.user.role,
+            'client_type':        self.user.client_type,
+            'kyc_level':          self.user.kyc_level,
             'can_accept_booking': self.user.can_accept_booking,
-            'company':           self.user.company.name if self.user.company else '',
+            'company':            self.user.company.name if self.user.company else '',
+            'phone':              phone,
+            'preferred_currency': preferred_currency,
         }
         data['tenant'] = {
             'id':            self.user.tenant_id,

@@ -18,6 +18,74 @@ class ShipmentDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('uploaded_by', 'uploaded_at')
 
+class PublicTrackingSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for public tracking — no pricing exposure."""
+
+    status_label = serializers.SerializerMethodField()
+    milestones = serializers.SerializerMethodField()
+    mode = serializers.SerializerMethodField()
+    origin = serializers.SerializerMethodField()
+    destination = serializers.SerializerMethodField()
+    commodity = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shipment
+        fields = [
+            'shipment_number', 'awb_bl_number', 'status', 'status_label',
+            'etd', 'eta', 'mode', 'origin', 'destination', 'commodity',
+            'milestones', 'created_at',
+        ]
+
+    def get_status_label(self, obj):
+        return dict(Shipment.STATUS_CHOICES).get(obj.status, obj.status)
+
+    def get_milestones(self, obj):
+        ms = obj.milestones.all().order_by('timestamp')
+        return [
+            {
+                'timestamp': m.timestamp.isoformat(),
+                'status_code': m.status_code,
+                'description': m.description,
+                'location': m.location,
+            }
+            for m in ms
+        ]
+
+    def get_mode(self, obj):
+        try:
+            return obj.quotation.request.get_mode_display()
+        except AttributeError:
+            return None
+
+    def get_origin(self, obj):
+        try:
+            req = obj.quotation.request
+            if req.needs_origin_port:
+                return req.pol_name or req.pol
+            if req.needs_pickup:
+                return req.pickup_city or req.pickup_address
+            return req.pol_name or req.pol
+        except AttributeError:
+            return None
+
+    def get_destination(self, obj):
+        try:
+            req = obj.quotation.request
+            if req.needs_dest_port:
+                return req.pod_name or req.pod
+            if req.needs_delivery:
+                return req.delivery_city or req.delivery_address
+            return req.pod_name or req.pod
+        except AttributeError:
+            return None
+
+    def get_commodity(self, obj):
+        try:
+            return obj.quotation.request.commodity
+        except AttributeError:
+            return None
+
+
 class ShipmentSerializer(serializers.ModelSerializer):
     milestones = ShipmentMilestoneSerializer(many=True, read_only=True)
     documents = ShipmentDocumentSerializer(many=True, read_only=True)

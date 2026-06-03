@@ -56,6 +56,33 @@ class Tenant(models.Model):
     logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True)
     primary_color = models.CharField(max_length=7, default='#2563eb', help_text="Hex color code")
     
+    # Quotation Numbering Settings
+    qr_prefix = models.CharField(max_length=3, default='Q', help_text="Max 3 uppercase letters")
+    qr_date_format = models.CharField(
+        max_length=4, 
+        choices=(('YYMM', 'YY-MM (e.g., 2605)'), ('MMYY', 'MM-YY (e.g., 0526)')), 
+        default='YYMM'
+    )
+    qr_seq_length = models.IntegerField(
+        choices=((4, '4 digits'), (5, '5 digits'), (6, '6 digits')),
+        default=4
+    )
+    
+    # Financial Settings
+    currencies = models.JSONField(default=list, help_text="List of enabled currencies, e.g., ['IDR', 'USD']")
+    default_tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=11.00, help_text="Default Tax/PPN %")
+    default_discount_type = models.CharField(
+        max_length=15, 
+        choices=(('percentage', 'Percentage (%)'), ('nominal', 'Nominal')),
+        default='percentage'
+    )
+    default_discount_value = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    
+    # Document Templates (Rich Text / HTML)
+    quotation_agreement = models.TextField(blank=True, default='')
+    booking_terms = models.TextField(blank=True, default='')
+    service_level_agreement = models.TextField(blank=True, default='')
+    
     # Status
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -183,6 +210,23 @@ class ClientProfile(models.Model):
     )
     kyc_reviewed_at   = models.DateTimeField(null=True, blank=True)
     kyc_notes         = models.TextField(blank=True, null=True)
+
+    # Preferences
+    CURRENCY_CHOICES = (
+        ('IDR', 'IDR — Indonesian Rupiah'),
+        ('USD', 'USD — US Dollar'),
+        ('SGD', 'SGD — Singapore Dollar'),
+        ('MYR', 'MYR — Malaysian Ringgit'),
+        ('CNY', 'CNY — Chinese Yuan'),
+        ('JPY', 'JPY — Japanese Yen'),
+        ('EUR', 'EUR — Euro'),
+        ('GBP', 'GBP — British Pound'),
+        ('AUD', 'AUD — Australian Dollar'),
+    )
+    preferred_currency = models.CharField(
+        max_length=5, choices=CURRENCY_CHOICES, default='IDR',
+        help_text="Client's preferred transaction currency",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

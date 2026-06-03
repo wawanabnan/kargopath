@@ -1,5 +1,7 @@
 # Request Quotation Form — Redesign Plan
 
+> **ARCHIVE NOTICE (Read First):** Dokumen ini adalah catatan implementasi historis. Sumber kebenaran aktif sudah dipindahkan ke `docs/README.md` (hub), `docs/business_rules.md`, `docs/decision_log.md`, dan `docs/handoff_checkpoint.md`.
+>
 > **Status:** ✅ SELESAI — commit `6e5150e`
 > **Tujuan:** Redesign RequestQuotePage dengan style corporate (konsisten dengan dashboard) + integrasi master data location dari API
 
@@ -135,13 +137,21 @@ GET /api/v1/locations/cities/?search=bekasi
 ```
 
 ### Mode × Scope Matrix
-| Mode | Scope | Origin | Destination |
-|------|-------|--------|-------------|
-| Sea/Air | D2D | City + Address | City + Address |
-| Sea/Air | D2P | City + Address | Port/Airport |
-| Sea/Air | P2D | Port/Airport | City + Address |
-| Sea/Air | P2P | Port/Airport | Port/Airport |
-| Land | D2D | City + Address | City + Address |
+| Mode | Scope | Origin (Left Column/Tab) | Destination (Right Column/Tab) |
+|------|-------|--------------------------|--------------------------------|
+| Sea | D2D | Pickup Address + POL (Port of Loading) | POD (Port of Discharge) + Delivery Address |
+| Sea | D2P | Pickup Address + POL | POD |
+| Sea | P2D | POL | POD + Delivery Address |
+| Sea | P2P | POL | POD |
+| Air | D2D | Pickup Address + Origin (Airport) | Destination (Airport) + Delivery Address |
+| Air | D2P | Pickup Address + Origin (Airport) | Destination (Airport) |
+| Air | P2D | Origin (Airport) | Destination (Airport) + Delivery Address |
+| Air | P2P | Origin (Airport) | Destination (Airport) |
+| Land | D2D | Origin City (Autocomplete) + Pickup Address | Destination City (Autocomplete) + Delivery Address |
+
+*Note: 
+- Origin dan Destination ditampilkan secara side-by-side (berdampingan) agar mudah dilihat, isinya dinamis menyesuaikan tabel matriks di atas.
+- Untuk Land Trucking, form Origin/Destination wajib diisi dari data Autocomplete City (Kota/Kabupaten).*
 
 ### Style Guide (konsisten dengan dashboard)
 ```
