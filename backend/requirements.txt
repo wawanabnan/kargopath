@@ -14,7 +14,8 @@ django-filter>=23.5
 # Tree structure for Location hierarchy
 django-mptt==0.16.0
 
-# Database (PostgreSQL support)
+# Database (MySQL for production, SQLite for dev)
+mysqlclient>=2.2.0
 psycopg[binary]>=3.1.0
 
 # Production Server

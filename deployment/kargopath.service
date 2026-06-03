@@ -1,11 +1,11 @@
 [Unit]
 Description=KargoPath Django Application
-After=network.target postgresql.service
+After=network.target mysql.service
 
 [Service]
 Type=notify
-User=www-data
-Group=www-data
+User=dakamin
+Group=dakamin
 WorkingDirectory=/var/www/kargopath/backend
 Environment="PATH=/var/www/kargopath/backend/venv/bin"
 EnvironmentFile=/var/www/kargopath/backend/.env
