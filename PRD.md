@@ -109,7 +109,7 @@ Sales Isi Form Quotation → Generate Link Quotation
 - **F2.4** — Quotation versioning (Revisi Quotation dengan history)
 - **F2.5** — PDF export Quotation Letter (branded)
 - **F2.6** — Link unik quotation yang bisa diakses tanpa login (untuk client)
-- **F2.7** — Status tracking: `Draft → Submitted → Under Review → Sent → Accepted / Revised / Rejected / Expired`
+- **F2.7** — Status tracking: `Inquiry → Assigned → Quoted → Sent → Accepted / Rejected / Expired`
 - **F2.8** — Expiry date per quotation (default: 7 hari)
 - **F2.9** — Comment/notes thread antara sales dan client per quotation
 

@@ -1,6 +1,6 @@
 # KargoPath — Decision Log
 
-> **Last Updated:** 2026-06-02
+> **Last Updated:** 2026-06-03
 > **Tujuan:** Mencatat semua keputusan arsitektur dan desain penting. Jika chat terputus, AI baca file ini untuk paham konteks tanpa perlu diskusi ulang.
 
 ---
@@ -172,6 +172,77 @@
 - **Keputusan:** Sales dapat mengubah flag `is_taxable` per line item pada quotation. ChargeMaster menyediakan `taxable_default` sebagai default, tetapi Sales memiliki wewenang override.
 - **Alasan:** Fleksibilitas pricing untuk kasus khusus (misal: biaya tertentu tidak kena PPN).
 - **Impact:** `QuotationItem.is_taxable` dapat diedit oleh Sales selama quotation belum di-price-lock.
+
+---
+
+## Keputusan UI/UX & Flow (2026-06-03)
+
+### D-050: Rounded Corners Removal
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Semua rounded corners dihapus secara global di CSS (`--radius-*` = 0). UI konsisten dengan tampilan square modern.
+- **Alasan:** Konsistensi dan tampilan korporat yang bersih.
+- **Impact:** `frontend/src/index.css` override semua radius token.
+
+### D-051: Dashboard Background & Sidebar
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Background dashboard `bg-gray-100`, sidebar dark (`bg-slate-900`). Collapse button di atas (sebelah logo), bottom diganti copyright.
+- **Alasan:** Navigasi lebih intuitif, informasi hak cipta di bagian bawah.
+- **Impact:** `DashboardLayout.jsx` restruktur.
+
+### D-052: Print & PDF Preview Modal
+- **Tanggal:** 2026-06-03
+- **Keputusan:**
+  - Button "Preview PDF" visible untuk CLIENT di semua status kecuali DRAFT; visible untuk semua role.
+  - Preview modal dengan toolbar zoom (+/- 25%), Print (via `window.print()`), Close.
+  - Watermark pada PDF berdasarkan status: DRAFT (slate), ACCEPTED (green), REJECTED (red), SELAINNYA (slate).
+- **Alasan:** Client perlu lihat dokumen quotation sebelum memutuskan.
+- **Impact:** `QuoteDetailPage.jsx` — state `showPdfPreview`, `pdfZoom`.
+
+### D-053: Discount Editing (Sales, DRAFT)
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Discount bisa diedit oleh Sales selama quotation masih DRAFT. Toggle antara `{currency}` (fixed amount) dan `%` (percentage). PATCH via API.
+- **Alasan:** Fleksibilitas negosiasi harga sebelum dikirim ke client.
+- **Impact:** UI discount inline di Charges Breakdown.
+
+### D-054: SENT Flow — Role-Based Response
+- **Tanggal:** 2026-06-03
+- **Keputusan:**
+  - Tombol Accept/Reject hanya muncul untuk CLIENT.
+  - Sales/Admin melihat teks "Waiting for client response on this quotation."
+  - Status banner berbeda per role.
+- **Alasan:** Keamanan — hanya client yang berhak accept/reject quotation mereka.
+- **Impact:** `QuoteDetailPage.jsx` conditional rendering by `user.role`.
+
+### D-055: Currency Consistency
+- **Tanggal:** 2026-06-03
+- **Keputusan:**
+  - `handleCreateQuotation` mengirim `currency: requestObj.cargo_currency`.
+  - `handleAddCharge` mengirim `currency: data.currency`.
+  - Charge items selalu mewarisi currency dari quotation/request.
+- **Alasan:** Mencegah mismatch currency antara request, quotation, dan line items.
+- **Impact:** Frontend payload API di QuoteDetailPage.
+
+### D-056: AddChargeModal Placeholder
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Dropdown Charge Master default ke placeholder "Select Charge Item" (`charge_master = '__unselected__'`). Opsi "Others" di urutan terakhir.
+- **Alasan:** User harus explicitly memilih charge master, tidak auto-select ke Others.
+- **Impact:** `QuoteDetailPage.jsx` — state initialization.
+
+### D-057: Request Status Flow — INQUIRY / ASSIGNED / QUOTED
+- **Tanggal:** 2026-06-03
+- **Keputusan:**
+  - Status baru: `INQUIRY` (client submit), `ASSIGNED` (admin assign sales), `QUOTED` (sales buat quotation). Hapus `DRAFT`, `PENDING`, `REVISED`.
+  - Display text per role via serializer field `display_status`.
+  - `assign_sales` otomatis set status ke `ASSIGNED`.
+  - Saat quotation dibuat, request status otomatis `QUOTED`.
+- **Alasan:** Status lebih jelas dan sesuai business flow. Client, Sales, Admin lihat label berbeda.
+- **Impact:** Backend model/view/serializer + frontend filter kondisi semua diupdate.
+
+### D-058: Landing Page Redesign
+- **Tanggal:** 2026-06-03
+- **Keputusan:** Hero dark dengan background image container port, font Oswald (headline) + Montserrat (section) + Roboto (body). Sisa halaman light theme (putih + gray-50).
+- **Alasan:** Tampilan modern, corporate, cocok untuk bisnis logistik. Hero image lokal (`kargopath_ex1.jpg`).
+- **Impact:** `LandingPage.jsx` + `Navbar.jsx` + Google Fonts di `index.html`.
 
 ---
 

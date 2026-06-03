@@ -5,8 +5,8 @@
 - [x] All code committed and pushed to Git
 - [ ] SECRET_KEY generated and updated in .env
 - [ ] .env file NOT committed to Git (verified in .gitignore)
-- [x] requirements.txt includes gunicorn and psycopg
-- [ ] Frontend built successfully (`npm run build`)
+- [x] requirements.txt includes gunicorn and mysqlclient
+- [x] Frontend built successfully (`npm run build`)
 - [ ] All tests passing (if any)
 
 ## VPS Setup
@@ -15,14 +15,14 @@
 - [ ] System updated (`sudo apt update && sudo apt upgrade`)
 - [ ] Python 3.10+ installed
 - [ ] Node.js 18+ installed
-- [ ] PostgreSQL installed and running
+- [ ] MySQL installed and running (database engine sudah ada di server)
 - [ ] Nginx installed
 - [ ] Git installed
 
 ## Database Setup
 
-- [ ] PostgreSQL database created (`CREATE DATABASE kargopath;`)
-- [ ] PostgreSQL user created with password
+- [ ] MySQL database created (`CREATE DATABASE kargopath CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`)
+- [ ] MySQL user created with password
 - [ ] User granted privileges on database
 - [ ] Database credentials added to .env on VPS
 
@@ -31,6 +31,7 @@
 - [ ] Repository cloned to `/var/www/kargopath`
 - [ ] Python virtual environment created
 - [ ] Backend dependencies installed (`pip install -r requirements.txt`)
+- [ ] Install `mysqlclient` jika belum ada (`pip install mysqlclient`)
 - [ ] Frontend dependencies installed (`npm install`)
 - [ ] Frontend built (`npm run build`)
 - [ ] .env file created on VPS with production settings
@@ -44,7 +45,7 @@
 - [ ] Log directory created (`/var/log/kargopath/`)
 - [ ] Systemd service file copied to `/etc/systemd/system/`
 - [ ] Systemd service enabled and started
-- [ ] Nginx config copied to `/etc/nginx/sites-available/`
+- [ ] Nginx config copied to `/etc/nginx/sites-available/` (subdomain: kargopath.dakarash.co.id)
 - [ ] Nginx config symlinked to `/etc/nginx/sites-enabled/`
 - [ ] Nginx configuration tested (`sudo nginx -t`)
 - [ ] Nginx restarted
@@ -53,17 +54,17 @@
 
 - [ ] Firewall configured (UFW)
 - [ ] Only necessary ports open (80, 443, 22)
-- [ ] SSL certificate installed (Let's Encrypt)
+- [ ] SSL certificate installed (Let's Encrypt / Certbot)
 - [ ] HTTPS redirect configured
 - [ ] SECRET_KEY is secure and unique
 - [ ] DEBUG=False in production .env
-- [ ] ALLOWED_HOSTS configured correctly
+- [ ] ALLOWED_HOSTS configured correctly (`['kargopath.dakarash.co.id', 'localhost', '127.0.0.1']`)
 
 ## Testing
 
-- [ ] Frontend accessible at http://vps-ip/
-- [ ] Backend API accessible at http://vps-ip/api/v1/
-- [ ] Django admin accessible at http://vps-ip/admin/
+- [ ] Frontend accessible at https://kargopath.dakarash.co.id
+- [ ] Backend API accessible at https://kargopath.dakarash.co.id/api/v1/
+- [ ] Django admin accessible at https://kargopath.dakarash.co.id/admin/
 - [ ] User registration works
 - [ ] User login works (JWT token)
 - [ ] Quotation request creation works
@@ -81,7 +82,7 @@
 
 ## Post-Deployment
 
-- [ ] DNS configured (if using domain)
+- [ ] DNS configured (A record: kargopath.dakarash.co.id → IP VPS)
 - [ ] SSL certificate auto-renewal tested
 - [ ] Backup schedule established
 - [ ] Team notified of deployment

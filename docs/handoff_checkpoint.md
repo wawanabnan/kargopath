@@ -33,20 +33,20 @@ Jika ada konflik antar dokumen, prioritaskan urutan di atas.
 
 ### To Do
 - Tambah test coverage (backend unittest + frontend component test).
-- Implementasi PDF export quotation (WeasyPrint / ReportLab).
+- Implementasi PDF export quotation (WeasyPrint / ReportLab) via server-side.
 - Implementasi email notification untuk trigger key (quotation, shipment update).
 - Seed data produksi untuk locations (ports, airports, cities) via management commands.
 - Rate limiting & security hardening untuk public endpoints.
 
 ### In Progress
-- Konsolidasi dokumentasi agar tidak ada SSOT ganda.
+— (none currently)
 
 ### Blocked (Need Decision)
 — (none currently)
 
 ### Done
 - ✅ Backend: Seluruh model, serializer, view, URL routing, admin interface.
-- ✅ Frontend: 18 pages + routing, API client, role-aware UI.
+- ✅ Frontend: 20+ pages + routing, API client, role-aware UI.
 - ✅ Multi-tenant architecture (Tenant model, middleware, data isolation).
 - ✅ Auth & User Management (JWT, register, login, KYC, RBAC).
 - ✅ QuotationRequest — full service matrix (mode x scope) dengan validasi kondisional.
@@ -61,15 +61,25 @@ Jika ada konflik antar dokumen, prioritaskan urutan di atas.
 - ✅ Frontend tracking page menggunakan real API (tidak lagi mock).
 - ✅ Admin settings page (numbering rules, financial settings, document templates).
 - ✅ Print layout untuk quotation document.
+- ✅ PDF Preview modal dengan zoom controls (+/- 25%), Print, dan watermark status.
+- ✅ Discount editing (Sales, DRAFT) dengan toggle % / fixed amount.
+- ✅ SENT flow — Accept/Reject hanya untuk CLIENT; Sales lihat "Waiting for client response".
+- ✅ Currency consistency — quotation mengikuti `requestObj.cargo_currency`.
+- ✅ AddChargeModal default placeholder "Select Charge Item", Others di urutan terakhir.
+- ✅ Status flow refactor: INQUIRY → ASSIGNED → QUOTED (role-based display via `display_status`).
+- ✅ Landing page redesign — hero dark with cargo image, font palette (Oswald/Montserrat/Roboto), light theme sections.
+- ✅ Dashboard background light grey, sidebar collapse di atas + copyright bottom.
+- ✅ Hapus rounded corners global (square UI).
+- ✅ Charge Master management page (Admin CRUD).
 
 ---
 
 ## Progress Summary
-- Analysis: 95%
-- Documentation consolidation: 80%
-- Architecture decision alignment: 90%
-- Implementation: 85% (core modules complete, polish remaining)
-- Overall: 88%
+- Analysis: 100%
+- Documentation consolidation: 100%
+- Architecture decision alignment: 100%
+- Implementation: 90% (core modules complete, polish remaining)
+- Overall: 95%
 
 ---
 
@@ -187,7 +197,7 @@ py -3 manage.py seed_ports_airports
 - Admin: `admin@kargopath.com` / `admin123456`
 - Sales: `sales@kargopath.com` / `sales123456`
 - Ops: `ops@kargopath.com` / `ops123456`
-- Client: `it@dakarsh.co.id` / `client123456`
+- Client: `it@dakarash.co.id` / `client123456`
 
 ---
 
@@ -216,6 +226,6 @@ py -3 manage.py seed_ports_airports
 ---
 
 ## Next 3 Actions
-1. Implementasi test coverage (backend: pytest, frontend: vitest).
-2. Implementasi PDF export quotation (WeasyPrint).
+1. Setup deployment ke VPS (MySQL, Nginx, Gunicorn, subdomain).
+2. Implementasi test coverage (backend: pytest, frontend: vitest).
 3. Implementasi email notification (SendGrid/Mailgun) untuk trigger key.

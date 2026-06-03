@@ -13,12 +13,19 @@ Dokumen ini adalah *Single Source of Truth* bagi AI maupun Developer untuk memah
 3. Jika Client adalah Guest (belum login), data disimpan sebagai draft di session backend (`/save-draft/`), kemudian diarahkan ke Register/Login. Setelah berhasil masuk, draft disubmit menjadi request resmi (`/submit-draft/`).
 
 ### B. Quotation Management Flow (Staff)
-1. Request yang masuk bersatus **PENDING**.
-2. **Sales / Admin** mengecek Request tersebut. Admin dapat meng-*assign* Sales.
-3. Sales membuat penawaran harga (**Quotation**) dengan mengisi rincian biaya (*Line Items*: Freight, THC, Customs, dll), PPN (Tax), dan Diskon.
-4. Quotation dikirim ke Client (Status: **SENT**).
-5. Client me-review di Dashboard mereka dan memilih **Accept** atau **Reject**.
-6. Jika Accept, sistem otomatis membuat draft **Shipment** (Status: **BOOKED**).
+1. Request yang masuk bersatus **INQUIRY**.
+2. **Admin** dapat melihat request baru dengan status "New Inquiry" dan meng-*assign* ke Sales.
+3. Setelah di-assign, status berubah menjadi **ASSIGNED**.
+   - **Sales** melihat "In Pricing" dan dapat mulai membuat penawaran.
+   - **Client** tetap melihat "Under Review".
+4. Sales membuat penawaran harga (**Quotation**) dengan mengisi rincian biaya (*Line Items*: Freight, THC, Customs, dll), PPN (Tax), dan Diskon.
+5. Setelah Quotation dibuat, status Request berubah menjadi **QUOTED**.
+   - Semua role melihat "Quoted".
+6. Quotation dikirim ke Client (Status Quotation: **SENT**).
+   - **Client** melihat tombol Accept/Reject.
+   - **Sales/Admin** melihat "Awaiting Client Response".
+7. Client me-review di Dashboard mereka dan memilih **Accept** atau **Reject**.
+8. Jika Accept, sistem otomatis membuat draft **Shipment** (Status: **BOOKED**).
 
 ---
 
@@ -145,6 +152,24 @@ Bagian ini menjadi acuan tunggal untuk kalkulasi quotation.
    - tidak boleh melakukan perubahan pricing.
 4. **Client**:
    - hanya review/accept/reject quotation.
+
+### H. Request Status Flow (Role-Based Display)
+
+| DB Status | Client lihat | Sales lihat | Admin lihat | Trigger |
+|-----------|-------------|-------------|-------------|---------|
+| `INQUIRY` | Under Review | New Inquiry | New Inquiry | Client submit request |
+| `ASSIGNED` | Under Review | In Pricing | Assigned | Admin assign sales |
+| `QUOTED` | Quoted | Quoted | Quoted | Sales creates quotation |
+| `ACCEPTED` | Accepted | Accepted | Accepted | Client accepts quotation |
+| `REJECTED` | Rejected | Rejected | Rejected | Client rejects quotation |
+| `EXPIRED` | Expired | Expired | Expired | Quotation expired |
+
+**Aturan:**
+1. Display text (`display_status`) di-generate oleh backend berdasarkan `request.user.role`, bukan di-frontend.
+2. Status `INQUIRY` berarti request baru, belum di-assign ke Sales.
+3. Status `ASSIGNED` berarti Sales sudah ditunjuk dan sedang mengerjakan pricing.
+4. Status `QUOTED` berarti Quotation sudah dibuat (DRAFT), menunggu dikirim ke Client.
+5. Quotation memiliki status terpisah: `DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`, `EXPIRED`.
 
 ---
 
