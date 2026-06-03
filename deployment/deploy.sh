@@ -20,11 +20,10 @@ echo "  KargoPath Deployment"
 echo "══════════════════════════════════════════"
 
 # ── 1. System Packages ────────────────────────────────
-echo ">>> [1/8] Installing system packages..."
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv nodejs npm nginx cerbot python3-certbot-nginx
-# MySQL dev headers (required for mysqlclient)
-sudo apt install -y default-libmysqlclient-dev build-essential pkg-config
+echo ">>> [1/8] Checking system packages..."
+# Only install missing packages that are critical for mysqlclient
+sudo apt update -qq
+sudo apt install -y default-libmysqlclient-dev pkg-config 2>/dev/null || true
 
 # ── 2. Python Virtual Environment ─────────────────────
 echo ">>> [2/8] Creating Python virtual environment..."
