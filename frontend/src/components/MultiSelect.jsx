@@ -47,7 +47,7 @@ export default function MultiSelect({ options, value, onChange, placeholder, dis
                 <div key={o.value}
                   onClick={() => toggle(o.value)}
                   className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
-                    isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700 hover:bg-slate-50'
+                    isSelected ? 'bg-blue-600 text-white font-medium rounded' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   {o.label}
