@@ -348,6 +348,9 @@ class ChargeMaster(models.Model):
     default_currency = models.CharField(max_length=5, default='IDR')
     taxable_default = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
+    is_tax = models.BooleanField(default=False, help_text="If True, this charge is a tax item (PPN/PPh etc.)")
+    tax_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
+        help_text="Tax percentage (e.g. 1.10 for 1.1%). Used when is_tax=True")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

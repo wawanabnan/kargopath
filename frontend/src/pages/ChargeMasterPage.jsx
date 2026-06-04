@@ -10,7 +10,7 @@ export default function ChargeMasterPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true });
+  const [form, setForm] = useState({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true, is_tax: false, tax_percent: '' });
 
   const load = async () => {
     setLoading(true);
@@ -27,7 +27,7 @@ export default function ChargeMasterPage() {
   useEffect(() => { load(); }, []);
 
   const resetForm = () => {
-    setForm({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true });
+    setForm({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true, is_tax: false, tax_percent: '' });
     setEditing(null);
     setShowForm(false);
   };
@@ -37,6 +37,7 @@ export default function ChargeMasterPage() {
       name: m.name, code: m.code || '', category: m.category,
       default_unit: m.default_unit, default_rate: parseFloat(m.default_rate),
       default_currency: m.default_currency, taxable_default: m.taxable_default,
+      is_tax: m.is_tax, tax_percent: m.tax_percent || '',
     });
     setEditing(m.id);
     setShowForm(true);
@@ -149,6 +150,16 @@ export default function ChargeMasterPage() {
                 <input type="checkbox" checked={form.taxable_default} onChange={e => setForm({...form, taxable_default: e.target.checked})} className="rounded border-slate-300" />
                 Taxable (PPN)
               </label>
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 self-end pb-2">
+                <input type="checkbox" checked={form.is_tax} onChange={e => setForm({...form, is_tax: e.target.checked, tax_percent: e.target.checked ? form.tax_percent : ''})} className="rounded border-slate-300" />
+                Is Tax Item
+              </label>
+              {form.is_tax && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Tax %</label>
+                  <input type="number" min="0" step="0.01" value={form.tax_percent} onChange={e => setForm({...form, tax_percent: e.target.value})} placeholder="e.g. 1.10" className="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:border-blue-600" />
+                </div>
+              )}
             </div>
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs transition-colors flex items-center gap-1.5">
@@ -174,12 +185,13 @@ export default function ChargeMasterPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-800">{m.name}</span>
+                    {m.is_tax && <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-50 border border-amber-200 px-1.5 py-0.5">TAX</span>}
                     {m.code && <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5">{m.code}</span>}
                     <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5">{categories.find(c => c.value === m.category)?.label || m.category}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {m.default_currency} {parseFloat(m.default_rate).toLocaleString('id-ID')} / {m.default_unit}
-                    {m.taxable_default ? ' · Taxable' : ' · Non-taxable'}
+                    {m.is_tax ? `${m.tax_percent}% Tax Item` : `${m.default_currency} ${parseFloat(m.default_rate).toLocaleString('id-ID')} / ${m.default_unit}`}
+                    {!m.is_tax && (m.taxable_default ? ' · Taxable' : ' · Non-taxable')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

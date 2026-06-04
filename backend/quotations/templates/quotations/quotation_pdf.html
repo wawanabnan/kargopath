@@ -234,6 +234,7 @@
         {% if quotation.discount_type == 'PERCENT' %}{{ quotation.discount }}%{% else %}-{{ quotation.discount|currency_format:quotation.currency }}{% endif %}
       </td>
     </tr>
+    {% endif %}
     <tr>
       <td style="font-weight:600;">PPN ({{ quotation.tax_rate|floatformat:0 }}%)</td>
       <td class="text-right">{{ quotation.tax_amount|currency_format:quotation.currency }}</td>
@@ -241,15 +242,6 @@
     <tr class="total-row">
       <td style="font-size:11pt;">Grand Total</td>
       <td class="text-right" style="font-size:11pt;color:#2563eb;">{{ quotation.currency }} {{ quotation.grand_total|currency_format:quotation.currency }}</td>
-    </tr>
-    {% endif %}
-    <tr>
-      <td style="font-weight:600;">PPN ({{ quotation.tax_rate|floatformat:0 }}%)</td>
-      <td class="text-right">{{ quotation.tax_amount|floatformat:2 }}</td>
-    </tr>
-    <tr class="total-row">
-      <td style="font-size:11pt;">Grand Total</td>
-      <td class="text-right" style="font-size:11pt;color:#2563eb;">{{ quotation.currency }} {{ quotation.grand_total|floatformat:2 }}</td>
     </tr>
   </table>
 </div>

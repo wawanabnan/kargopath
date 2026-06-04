@@ -174,13 +174,21 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
               ) : chargeMasters.length === 0 ? (
                 <option disabled>No charge masters available</option>
               ) : (
-                chargeMasters.map(m => (
+                chargeMasters.filter(m => !m.is_tax).map(m => (
                   <option key={m.id} value={m.id}>
                     {m.name} ({m.default_currency}/{m.default_unit})
                   </option>
                 ))
               )}
               <option value="__others__">Others (Manual Entry)</option>
+              {chargeMasters.filter(m => m.is_tax).length > 0 && (
+                <option disabled>────────── TAX ──────────</option>
+              )}
+              {chargeMasters.filter(m => m.is_tax).map(m => (
+                <option key={m.id} value={m.id}>
+                  [TAX] {m.name} ({m.tax_percent}%)
+                </option>
+              ))}
             </select>
           </div>
           {isOthers && (
