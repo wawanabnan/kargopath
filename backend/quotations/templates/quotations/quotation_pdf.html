@@ -1,3 +1,4 @@
+{% load currency_filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -214,7 +215,7 @@
         <td>{{ item.get_category_display }}</td>
         <td>{{ item.qty|floatformat:0 }}</td>
         <td>{{ item.unit }}</td>
-        <td>{{ item.amount|floatformat:2 }}</td>
+        <td>{{ item.amount|currency_format:quotation.currency }}</td>
       </tr>
       {% empty %}
       <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:12px;">No charges added yet.</td></tr>
@@ -225,13 +226,21 @@
 
 <div style="margin-left:auto;width:280px;">
   <table>
-    <tr><td style="font-weight:600;">Subtotal</td><td class="text-right">{{ quotation.subtotal|floatformat:2 }}</td></tr>
+    <tr><td style="font-weight:600;">Subtotal</td><td class="text-right">{{ quotation.subtotal|currency_format:quotation.currency }}</td></tr>
     {% if quotation.discount > 0 %}
     <tr>
       <td style="font-weight:600;">Discount</td>
       <td class="text-right" style="color:#dc2626;">
-        {% if quotation.discount_type == 'PERCENT' %}{{ quotation.discount }}%{% else %}-{{ quotation.discount|floatformat:2 }}{% endif %}
+        {% if quotation.discount_type == 'PERCENT' %}{{ quotation.discount }}%{% else %}-{{ quotation.discount|currency_format:quotation.currency }}{% endif %}
       </td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">PPN ({{ quotation.tax_rate|floatformat:0 }}%)</td>
+      <td class="text-right">{{ quotation.tax_amount|currency_format:quotation.currency }}</td>
+    </tr>
+    <tr class="total-row">
+      <td style="font-size:11pt;">Grand Total</td>
+      <td class="text-right" style="font-size:11pt;color:#2563eb;">{{ quotation.currency }} {{ quotation.grand_total|currency_format:quotation.currency }}</td>
     </tr>
     {% endif %}
     <tr>
