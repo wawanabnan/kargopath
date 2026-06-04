@@ -247,10 +247,10 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Select Tax</label>
               <MultiSelect
-                  options={taxMasters.filter(t => t.is_active !== false).map(t => ({
-                    value: t.id,
-                    label: `${t.display || t.code}: ${t.description} (${t.rate}%)`,
-                  }))}
+                    options={taxMasters.filter(t => t.is_active !== false).map(t => ({
+                      value: t.id,
+                      label: t.display || t.code,
+                    }))}
                   value={chargeForm.tax_ids || []}
                   onChange={(ids) => setChargeForm({ ...chargeForm, tax_ids: ids })}
                   placeholder="Select tax(es)..."
