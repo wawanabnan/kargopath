@@ -280,6 +280,39 @@ class QuotationViewSet(viewsets.ModelViewSet):
         quotation.save(update_fields=['status'])
         return Response({'detail': 'Quotation sent to client.'})
 
+    @action(detail=True, methods=['get'],
+            permission_classes=[permissions.IsAuthenticated])
+    def pdf(self, request, pk=None):
+        """Generate and download a PDF for this quotation."""
+        quotation = self.get_object()
+        items = quotation.items.all()
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        from django.http import HttpResponse
+
+        status_map = {
+            'DRAFT': ('draft', 'DRAFT — Not Final'),
+            'SENT': ('sent', 'QUOTATION'),
+            'ACCEPTED': ('accepted', 'ACCEPTED'),
+            'REJECTED': ('rejected', 'REJECTED'),
+            'EXPIRED': ('rejected', 'EXPIRED'),
+        }
+        status_class, status_label = status_map.get(quotation.status, ('draft', quotation.status))
+
+        html = render_to_string('quotations/quotation_pdf.html', {
+            'quotation': quotation,
+            'request': quotation.request,
+            'items': items,
+            'status_class': status_class,
+            'status_label': status_label,
+        })
+
+        pdf = HTML(string=html).write_pdf()
+        filename = f"{quotation.quotation_number}.pdf"
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+
 
 class QuotationItemViewSet(viewsets.ModelViewSet):
     """

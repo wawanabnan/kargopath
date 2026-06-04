@@ -27,6 +27,9 @@ gunicorn>=21.2.0
 # Environment Variables Management
 python-decouple>=3.8
 
+# PDF Generation
+weasyprint>=62.0
+
 # Image Processing (for document uploads)
 Pillow>=10.2.0
 

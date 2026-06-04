@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Package, MapPin, Anchor, CheckCircle2, FileText, FileDown, MessageSquare, Loader2, AlertCircle, Clock, UserPlus, ChevronDown, X, User } from 'lucide-react';
-import { quotationAPI, quotationRequestAPI, usersAPI, chargeMasterAPI } from '../api';
+import { quotationAPI, quotationRequestAPI, usersAPI, chargeMasterAPI, getAccessToken } from '../api';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 
@@ -300,6 +300,21 @@ export default function QuoteDetailPage() {
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfZoom, setPdfZoom] = useState(1);
 
+  const downloadPdf = async () => {
+    try {
+      const token = getAccessToken();
+      const response = await fetch(`${window.location.origin}/api/v1/quotations/${quotationId}/pdf/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to generate PDF');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   useEffect(() => {
     const fetchDetail = async () => {
       setLoading(true);
@@ -541,8 +556,8 @@ export default function QuoteDetailPage() {
                 </>
               )}
               {isQuotation && (user?.role !== 'CLIENT' || data?.status !== 'DRAFT') && (
-                <button onClick={() => setShowPdfPreview(true)} className="px-3 py-1.5 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs">
-                  <FileDown className="w-3.5 h-3.5" /> Preview PDF
+                <button onClick={downloadPdf} className="px-3 py-1.5 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs">
+                  <FileDown className="w-3.5 h-3.5" /> Download PDF
                 </button>
               )}
             </div>
