@@ -531,9 +531,14 @@ export default function QuoteDetailPage() {
                 </button>
               )}
               {user?.role === 'CLIENT' && (
-                <button onClick={() => setChatOpen(true)} className="px-3 py-1.5 border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs">
-                  <MessageSquare className="w-3.5 h-3.5" /> Contact Sales
-                </button>
+                <>
+                  <Link to="/quote" className="px-3 py-1.5 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs">
+                    <FileText className="w-3.5 h-3.5" /> New Quotation
+                  </Link>
+                  <button onClick={() => setChatOpen(true)} className="px-3 py-1.5 border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs">
+                    <MessageSquare className="w-3.5 h-3.5" /> Contact Sales
+                  </button>
+                </>
               )}
               {isQuotation && (user?.role !== 'CLIENT' || data?.status !== 'DRAFT') && (
                 <button onClick={() => setShowPdfPreview(true)} className="px-3 py-1.5 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs">

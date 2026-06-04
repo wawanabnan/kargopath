@@ -57,12 +57,12 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
     ? (user?.role === 'ADMIN' ? 'Administrator' : user?.role === 'SALES' ? 'Sales' : 'Operations')
     : (user?.client_type === 'company' ? 'Company' : user?.client_type === 'personal_business' ? 'Personal Business' : 'Client');
 
-  const avatarColor = isStaff ? 'bg-slate-700' : 'bg-blue-600';
+  const avatarColor = isStaff ? 'bg-neutral-700' : 'bg-blue-600';
 
   const NavLinks = ({ mobile = false, onClose }) => (
     <>
       {(!mobile && !collapsed) && (
-        <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+        <p className="px-2 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">
           {isStaff ? 'Operations' : 'Menu'}
         </p>
       )}
@@ -74,7 +74,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${active ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            } ${active ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
             <Icon className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && label}
           </Link>
@@ -84,14 +84,14 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
       {/* Admin-only links */}
       {isStaff && user?.role === 'ADMIN' && (
         <>
-          <div className="my-2 border-t border-slate-800" />
-          {(!mobile && !collapsed) && <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Admin</p>}
+          <div className="my-2 border-t border-neutral-700" />
+          {(!mobile && !collapsed) && <p className="px-2 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">Admin</p>}
           <Link to="/settings"
             title={!mobile && collapsed ? 'Settings' : undefined}
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${location.pathname === '/settings' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            } ${location.pathname === '/settings' ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
             <Settings className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && 'Settings'}
           </Link>
@@ -100,13 +100,13 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
             <DollarSign className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && 'Charge Master'}
           </Link>
           <a href="http://127.0.0.1:8000/admin/" target="_blank" rel="noopener noreferrer"
             title={!mobile && collapsed ? 'Django Admin' : undefined}
-            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors mb-0.5 ${!mobile && collapsed ? 'justify-center' : ''}`}>
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors mb-0.5 ${!mobile && collapsed ? 'justify-center' : ''}`}>
             <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> {(mobile || !collapsed) && 'Django Admin'}
           </a>
         </>
@@ -118,10 +118,10 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
     <div className="min-h-screen bg-gray-100 font-sans">
 
       {/* ── Sidebar (desktop) — FIXED position ── */}
-      <aside className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-slate-900 z-20 transition-all duration-200 ${sidebarW}`}>
+      <aside className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-neutral-800 z-20 transition-all duration-200 ${sidebarW}`}>
 
         {/* Logo + Collapse button */}
-        <div className={`h-12 flex-shrink-0 flex items-center border-b border-slate-800 ${collapsed ? 'justify-center px-0' : 'px-4 gap-2'}`}>
+        <div className={`h-12 flex-shrink-0 flex items-center border-b border-neutral-700 ${collapsed ? 'justify-center px-0' : 'px-4 gap-2'}`}>
           {collapsed
             ? <Package className="w-4 h-4 text-blue-400" />
             : <Link to="/" className="flex items-center gap-2">
@@ -132,14 +132,14 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
           {!collapsed && (
             <button onClick={() => setCollapsed(true)}
               title="Collapse sidebar"
-              className="ml-auto text-slate-500 hover:text-white transition-colors">
+              className="ml-auto text-neutral-500 hover:text-white transition-colors">
               <PanelLeftClose className="w-4 h-4" />
             </button>
           )}
           {collapsed && (
             <button onClick={() => setCollapsed(false)}
               title="Expand sidebar"
-              className="text-slate-500 hover:text-white transition-colors">
+              className="text-neutral-500 hover:text-white transition-colors">
               <PanelLeftOpen className="w-4 h-4" />
             </button>
           )}
@@ -151,8 +151,8 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
         </nav>
 
         {/* Copyright — always visible at bottom */}
-        <div className="flex-shrink-0 px-3 py-3 border-t border-slate-800">
-          <p className="text-[10px] text-slate-600 text-center leading-tight">
+        <div className="flex-shrink-0 px-3 py-3 border-t border-neutral-700">
+          <p className="text-[10px] text-neutral-500 text-center leading-tight">
             {collapsed
               ? '© 2026'
               : '© 2026 KargoPath'
@@ -230,8 +230,8 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
       {/* ── Mobile nav ── */}
       {mobileNav && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="w-52 bg-slate-900 flex flex-col">
-            <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+          <div className="w-52 bg-neutral-800 flex flex-col">
+            <div className="px-4 py-3 border-b border-neutral-700 flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2">
                 <Package className="w-4 h-4 text-blue-400" />
                 <span className="text-white font-bold text-sm">KargoPath</span>
@@ -243,9 +243,9 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             <nav className="flex-1 px-2 py-3 overflow-y-auto min-h-0">
               <NavLinks mobile onClose={() => setMobileNav(false)} />
             </nav>
-            <div className="px-2 py-3 border-t border-slate-800">
+            <div className="px-2 py-3 border-t border-neutral-700">
               <button onClick={logout}
-                className="w-full flex items-center gap-3 px-2 py-2.5 text-sm text-slate-400 hover:bg-slate-800 hover:text-white">
+                className="w-full flex items-center gap-3 px-2 py-2.5 text-sm text-neutral-400 hover:bg-neutral-700 hover:text-white">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>

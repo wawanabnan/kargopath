@@ -15,6 +15,9 @@
   --radius-3xl: 0;
   --radius-full: 0;
   --radius-blob: 0;
+  --color-sidebar-bg: #262626;
+  --color-dashboard-bg: #f3f4f6;
+  --color-section-bg: #ffffff;
 }
 
 html, body {
@@ -45,6 +48,10 @@ body {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
   .no-print {
     display: none !important;
   }

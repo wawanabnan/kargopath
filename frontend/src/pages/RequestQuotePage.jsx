@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { quotationRequestAPI, locationsAPI } from '../api';
+import DashboardLayout from '../components/DashboardLayout';
 
 // ── Service Matrix Helpers ────────────────────────────────────────────────────
 const needsPickup     = (scope) => scope.startsWith('d2');
@@ -598,52 +599,37 @@ export default function RequestQuotePage() {
 
   // ── Success state ─────────────────────────────────────────────────────────
   if (submitted) return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
-      <div className="bg-white border border-slate-200 p-10 text-center max-w-sm w-full">
-        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-        <h2 className="text-sm font-bold text-slate-900 mb-2">Request Submitted</h2>
-        <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-          Your quotation request has been received. Our sales team will review and respond within 2–4 business hours.
-        </p>
-        <Link to="/dashboard"
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors inline-block">
-          Go to Dashboard
-        </Link>
+    <DashboardLayout title="Request Quotation">
+      <div className="flex items-center justify-center p-4 font-sans">
+        <div className="bg-white border border-slate-200 p-10 text-center max-w-sm w-full">
+          <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+          <h2 className="text-sm font-bold text-slate-900 mb-2">Request Submitted</h2>
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+            Your quotation request has been received. Our sales team will review and respond within 2–4 business hours.
+          </p>
+          <Link to="/dashboard"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors inline-block">
+            Go to Dashboard
+          </Link>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-100 font-sans overflow-x-hidden">
+    <DashboardLayout title="Request Quotation">
 
-      {/* Top bar */}
-      <header className="bg-white border-b border-slate-200 px-5 h-12 flex items-center justify-between">
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-xs font-semibold">
-          <ArrowLeft className="w-3.5 h-3.5" /> {user ? 'Back to Dashboard' : 'Back to Home'}
-        </Link>
-        <div className="flex items-center gap-2">
-          <Package className="w-4 h-4 text-blue-600" />
-          <span className="font-bold text-slate-900 text-sm tracking-tight">KargoPath</span>
+      {/* Page title + progress */}
+      <div className="mb-6">
+        <h1 className="text-base font-bold text-slate-900">Request a Quotation</h1>
+        <p className="text-xs text-slate-500 mt-0.5">Step {step} of {STEPS.length} — {STEPS[step - 1]}</p>
+        <div className="flex gap-1 mt-3">
+          {STEPS.map((_, i) => (
+            <div key={i} className={`h-1 flex-1 transition-all ${i < step ? 'bg-blue-600' : 'bg-slate-200'}`} />
+          ))}
         </div>
-        {!user && (
-          <Link to="/login" className="text-xs font-semibold text-blue-600 hover:underline">Sign in</Link>
-        )}
-        {user && <div className="w-16" />}
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
-
-        {/* Page title + progress */}
-        <div className="mb-6">
-          <h1 className="text-base font-bold text-slate-900">Request a Quotation</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Step {step} of {STEPS.length} — {STEPS[step - 1]}</p>
-          <div className="flex gap-1 mt-3">
-            {STEPS.map((_, i) => (
-              <div key={i} className={`h-1 flex-1 transition-all ${i < step ? 'bg-blue-600' : 'bg-slate-200'}`} />
-            ))}
-          </div>
-        </div>
+      </div>
 
         {/* Error */}
         {error && (
@@ -1130,7 +1116,6 @@ export default function RequestQuotePage() {
           Need help?{' '}
           <Link to="/contact" className="underline hover:text-slate-600">Contact our team</Link>
         </p>
-      </div>
 
       {/* Guest completion modal */}
       {guestModal && (
@@ -1187,6 +1172,6 @@ export default function RequestQuotePage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

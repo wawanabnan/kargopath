@@ -66,7 +66,7 @@ function Layout() {
         <Route path="/faq"          element={<FAQPage />} />
 
         {/* Standalone pages (own layout) */}
-        <Route path="/quote"    element={<RequestQuotePage />} />
+        <Route path="/quote"    element={<PrivateRoute><RequestQuotePage /></PrivateRoute>} />
         <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 

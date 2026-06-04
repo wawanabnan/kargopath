@@ -56,3 +56,6 @@ build/
 .env.local
 .env.*.local
 .aider*
+
+# VPS
+docs/vps_info.md
