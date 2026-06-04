@@ -18,27 +18,29 @@ tenant, _ = Tenant.objects.get_or_create(
     defaults=dict(name='PT. Kargopath Logistic Nusantara', code='KGP', default_tax_rate=11.00)
 )
 
-# ── Admin user ──
-if not User.objects.filter(email='admin@kargopath.co').exists():
-    User.objects.create_user(
-        email='admin@kargopath.co', password='admin123456',
-        role='ADMIN', tenant=tenant, is_staff=True, is_superuser=True,
-        first_name='Admin', last_name='Kargopath'
-    )
-    print('Created admin@kargopath.co')
-else:
-    print('admin@kargopath.co already exists')
-
-# ── Demo client ──
-if not User.objects.filter(email='it@dakarash.co.id').exists():
-    User.objects.create_user(
-        email='it@dakarash.co.id', password='client123456',
-        role='CLIENT', tenant=tenant,
-        first_name='Demo', last_name='Client'
-    )
-    print('Created it@dakarash.co.id')
-else:
-    print('it@dakarash.co.id already exists')
+# ── Default users with known passwords ──
+defaults = [
+    dict(email='admin@kargopath.co',  password='admin123456', role='ADMIN',  first='Admin', last='Kargopath', staff=True),
+    dict(email='sales@kargopath.com', password='sales123456', role='SALES',  first='Sales', last='User',      staff=False),
+    dict(email='ferry@kargopath.com', password='sales123456', role='SALES',  first='Ferry', last='Pratama',   staff=False),
+    dict(email='ratna@kargopath.com', password='sales123456', role='SALES',  first='Ratna', last='Kumala',    staff=False),
+    dict(email='ops@kargopath.com',   password='ops123456',   role='OPS',    first='Ops',   last='User',      staff=False),
+    dict(email='it@dakarash.co.id',   password='client123456',role='CLIENT', first='Demo',  last='Client',    staff=False),
+]
+for d in defaults:
+    u, created = User.objects.get_or_create(email=d['email'], defaults=dict(
+        tenant=tenant, role=d['role'], first_name=d['first'], last_name=d['last'],
+        is_staff=d.get('staff', False), is_superuser=d.get('staff', False),
+    ))
+    if created:
+        u.set_password(d['password'])
+        u.save()
+        print(f'  Created: {d["email"]} ({d["role"]})')
+    else:
+        # Ensure password is correct even if user existed from dump
+        u.set_password(d['password'])
+        u.save()
+        print(f'  Reset pwd: {d["email"]} ({d["role"]})')
 
 # ── TaxMasters ──
 taxes = [
