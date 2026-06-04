@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Package, FileText, Ship, LogOut, Bell,
   Menu, X, LayoutDashboard, PanelLeftClose, PanelLeftOpen,
-  User, KeyRound, ChevronDown, DollarSign, Settings,
+  User, KeyRound, ChevronDown, DollarSign, Percent, Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -103,6 +103,15 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'}`}>
             <DollarSign className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && 'Charge Master'}
+          </Link>
+          <Link to="/settings/tax-masters"
+            title={!mobile && collapsed ? 'Tax Master' : undefined}
+            onClick={onClose}
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
+              !mobile && collapsed ? 'justify-center' : ''
+            } ${location.pathname === '/settings/tax-masters' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'}`}>
+            <Percent className="w-4 h-4 flex-shrink-0" />
+            {(mobile || !collapsed) && 'Tax Master'}
           </Link>
           <a href="http://127.0.0.1:8000/admin/" target="_blank" rel="noopener noreferrer"
             title={!mobile && collapsed ? 'Django Admin' : undefined}

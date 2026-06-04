@@ -235,10 +235,12 @@
       </td>
     </tr>
     {% endif %}
+    {% for tax in tax_breakdown %}
     <tr>
-      <td style="font-weight:600;">PPN ({{ quotation.tax_rate|floatformat:0 }}%)</td>
-      <td class="text-right">{{ quotation.tax_amount|currency_format:quotation.currency }}</td>
+      <td style="font-weight:600;">{{ tax.display }} ({{ tax.rate }}%)</td>
+      <td class="text-right">{{ tax.amount|currency_format:quotation.currency }}</td>
     </tr>
+    {% endfor %}
     <tr class="total-row">
       <td style="font-size:11pt;">Grand Total</td>
       <td class="text-right" style="font-size:11pt;color:#2563eb;">{{ quotation.currency }} {{ quotation.grand_total|currency_format:quotation.currency }}</td>

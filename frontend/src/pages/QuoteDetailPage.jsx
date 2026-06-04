@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Package, MapPin, Anchor, CheckCircle2, FileText, FileDown, MessageSquare, Loader2, AlertCircle, Clock, UserPlus, ChevronDown, X, User } from 'lucide-react';
-import { quotationAPI, quotationRequestAPI, usersAPI, chargeMasterAPI, getAccessToken } from '../api';
+import { quotationAPI, quotationRequestAPI, usersAPI, chargeMasterAPI, taxMasterAPI, getAccessToken } from '../api';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 
@@ -112,6 +112,7 @@ function toRaw(v) {
 
 function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMasters, chargeSaving, onSave, onClose }) {
   const [cmLoading, setCmLoading] = useState(true);
+  const [taxMasters, setTaxMasters] = useState([]);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -119,6 +120,9 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
       .then(data => setChargeMasters(data?.results ?? data ?? []))
       .catch(() => {})
       .finally(() => setCmLoading(false));
+    taxMasterAPI.list()
+      .then(data => setTaxMasters(data?.results ?? data ?? []))
+      .catch(() => {});
   }, [setChargeMasters]);
 
   useEffect(() => {
@@ -130,7 +134,7 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
   const handleMasterSelect = (e) => {
     const val = e.target.value;
     if (val === '__others__') {
-      setChargeForm({ ...chargeForm, charge_master: '__others__', charge_name: '', unit_price: '0,00', unit: 'KG', is_taxable: true });
+      setChargeForm({ ...chargeForm, charge_master: '__others__', charge_name: '', unit_price: '0,00', unit: 'KG', is_taxable: true, tax_ids: [] });
       return;
     }
     if (!val || val === '__unselected__') return;
@@ -143,8 +147,15 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
         unit_price: fmt(master.default_rate),
         unit: master.default_unit,
         is_taxable: master.taxable_default,
+        tax_ids: chargeForm.tax_ids || [],
       });
     }
+  };
+
+  const toggleTax = (taxId) => {
+    const current = chargeForm.tax_ids || [];
+    const next = current.includes(taxId) ? current.filter(id => id !== taxId) : [...current, taxId];
+    setChargeForm({ ...chargeForm, tax_ids: next });
   };
 
   const isOthers = chargeForm.charge_master === '__others__';
@@ -174,21 +185,13 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
               ) : chargeMasters.length === 0 ? (
                 <option disabled>No charge masters available</option>
               ) : (
-                chargeMasters.filter(m => !m.is_tax).map(m => (
+                chargeMasters.map(m => (
                   <option key={m.id} value={m.id}>
                     {m.name} ({m.default_currency}/{m.default_unit})
                   </option>
                 ))
               )}
               <option value="__others__">Others (Manual Entry)</option>
-              {chargeMasters.filter(m => m.is_tax).length > 0 && (
-                <option disabled>────────── TAX ──────────</option>
-              )}
-              {chargeMasters.filter(m => m.is_tax).map(m => (
-                <option key={m.id} value={m.id}>
-                  [TAX] {m.name} ({m.tax_percent}%)
-                </option>
-              ))}
             </select>
           </div>
           {isOthers && (
@@ -253,6 +256,24 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
             />
             Taxable (PPN)
           </label>
+          {taxMasters.length > 0 && (
+            <div className="border-t border-slate-100 pt-3">
+              <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Applicable Taxes</p>
+              <div className="space-y-1.5">
+                {taxMasters.filter(t => t.is_active !== false).map(t => (
+                  <label key={t.id} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(chargeForm.tax_ids || []).includes(t.id)}
+                      onChange={() => toggleTax(t.id)}
+                      className="rounded border-slate-300"
+                    />
+                    <span>{t.display || t.code}: {t.description} ({t.rate}%)</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="px-5 py-4 border-t border-slate-200 flex gap-3">
           <button onClick={onClose}
@@ -298,7 +319,7 @@ export default function QuoteDetailPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [quotationId, setQuotationId] = useState(isQuotation ? id : null);
   const [showAddCharge, setShowAddCharge] = useState(false);
-  const [chargeForm, setChargeForm] = useState({ charge_name: '', qty: '1,00', unit_price: '0,00', unit: 'KG', is_taxable: true, charge_master: '__unselected__' });
+  const [chargeForm, setChargeForm] = useState({ charge_name: '', qty: '1,00', unit_price: '0,00', unit: 'KG', is_taxable: true, charge_master: '__unselected__', tax_ids: [] });
   const [chargeSaving, setChargeSaving] = useState(false);
   const [chargeMasters, setChargeMasters] = useState([]);
   const [discountEditing, setDiscountEditing] = useState(false);
@@ -451,6 +472,7 @@ export default function QuoteDetailPage() {
         unit: chargeForm.unit,
         is_taxable: chargeForm.is_taxable,
         currency: data.currency || 'USD',
+        taxes: chargeForm.tax_ids || [],
       };
       const cmVal = chargeForm.charge_master;
       if (cmVal && cmVal !== '__others__') {
@@ -460,7 +482,7 @@ export default function QuoteDetailPage() {
       const updated = await quotationAPI.detail(qId);
       setData(updated);
       setShowAddCharge(false);
-      setChargeForm({ charge_name: '', qty: '1,00', unit_price: '0,00', unit: 'KG', is_taxable: true, charge_master: '__unselected__' });
+      setChargeForm({ charge_name: '', qty: '1,00', unit_price: '0,00', unit: 'KG', is_taxable: true, charge_master: '__unselected__', tax_ids: [] });
     } catch (err) {
       alert(err?.detail || 'Failed to add charge.');
     } finally {

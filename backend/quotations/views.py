@@ -7,12 +7,13 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 import uuid
 
-from .models import QuotationRequest, Quotation, QuotationItem, ChargeMaster
+from .models import QuotationRequest, Quotation, QuotationItem, ChargeMaster, TaxMaster
 from .serializers import (
     QuotationRequestSerializer,
     QuotationSerializer,
     QuotationItemSerializer,
     ChargeMasterSerializer,
+    TaxMasterSerializer,
 )
 
 
@@ -285,7 +286,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
     def pdf(self, request, pk=None):
         """Generate and download a PDF for this quotation."""
         quotation = self.get_object()
-        items = quotation.items.all()
+        from decimal import Decimal
+        items = quotation.items.prefetch_related('taxes').all()
         from django.template.loader import render_to_string
         from weasyprint import HTML
         from django.http import HttpResponse
@@ -299,12 +301,36 @@ class QuotationViewSet(viewsets.ModelViewSet):
         }
         status_class, status_label = status_map.get(quotation.status, ('draft', quotation.status))
 
+        # Compute per-tax breakdown
+        tax_ids = set()
+        for i in items:
+            for t in i.taxes.all():
+                tax_ids.add(t.pk)
+        taxes = TaxMaster.objects.filter(pk__in=tax_ids, is_active=True)
+        tax_breakdown = []
+        for tax in taxes:
+            taxable = sum(
+                (i.amount for i in items if i.is_taxable and tax in i.taxes.all()),
+                Decimal("0")
+            )
+            if taxable == 0:
+                continue
+            tax_breakdown.append({
+                'display': tax.display,
+                'description': tax.description,
+                'code': tax.code,
+                'rate': tax.rate,
+                'taxable_base': taxable,
+                'amount': taxable * (tax.rate / Decimal("100")),
+            })
+
         html = render_to_string('quotations/quotation_pdf.html', {
             'quotation': quotation,
             'request': quotation.request,
             'items': items,
             'status_class': status_class,
             'status_label': status_label,
+            'tax_breakdown': tax_breakdown,
         })
 
         pdf = HTML(string=html).write_pdf()
@@ -383,4 +409,32 @@ class ChargeMasterViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if self.request.user.role != 'ADMIN':
             raise PermissionDenied('Only ADMIN can delete charge masters.')
+        instance.delete()
+
+
+class TaxMasterViewSet(viewsets.ModelViewSet):
+    """
+    Manage tax types per tenant (PPN, PPnBM, etc.).
+    - ADMIN: full CRUD
+    - SALES: read-only
+    """
+    serializer_class = TaxMasterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TaxMaster.objects.filter(tenant=self.request.user.tenant)
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can create tax masters.')
+        serializer.save(tenant=self.request.user.tenant)
+
+    def perform_update(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can update tax masters.')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only ADMIN can delete tax masters.')
         instance.delete()

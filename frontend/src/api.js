@@ -199,6 +199,22 @@ export const chargeMasterAPI = {
   remove: (id) => request(`/charge-masters/${id}/`, { method: 'DELETE' }),
 };
 
+export const taxMasterAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/tax-masters/${qs ? '?' + qs : ''}`);
+  },
+  create: (data) => request('/tax-masters/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id, data) => request(`/tax-masters/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  remove: (id) => request(`/tax-masters/${id}/`, { method: 'DELETE' }),
+};
+
 // ── Users API ───────────────────────────────────────────────────────────────────
 export const usersAPI = {
   salesUsers: () => request('/auth/sales-users/'),

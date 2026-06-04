@@ -302,22 +302,50 @@ class Quotation(models.Model):
         return f"{self.quotation_number} – {self.status}"
 
     def recalculate_totals(self):
-        """Recompute subtotal, discount, tax, and grand total from line items."""
-        self.subtotal = sum((i.amount for i in self.items.all()), Decimal("0"))
+        """Recompute subtotal, discount, tax, and grand total from line items.
 
-        # Support discount as AMOUNT or PERCENT value.
+        Tax is calculated per TaxMaster: for each tax type, sum amounts of
+        taxable items that have that tax selected, apply the tax rate, then
+        sum all tax amounts together.
+
+        Falls back to the legacy single-tax_rate field if no TaxMaster
+        relations exist on any item.
+        """
+        items = self.items.prefetch_related('taxes').all()
+        self.subtotal = sum((i.amount for i in items), Decimal("0"))
+
         if self.discount_type == 'PERCENT':
             discount_amount = (self.subtotal * self.discount) / Decimal("100")
         else:
             discount_amount = self.discount
         discount_amount = min(discount_amount, self.subtotal)
 
-        taxable_subtotal = sum(
-            (i.amount for i in self.items.filter(is_taxable=True)),
-            Decimal("0")
-        )
-        taxable_base = max(taxable_subtotal - discount_amount, Decimal("0"))
-        self.tax_amount = taxable_base * (self.tax_rate / Decimal("100"))
+        # Collect unique taxes across all items
+        tax_ids = set()
+        for i in items:
+            for t in i.taxes.all():
+                tax_ids.add(t.pk)
+
+        if not tax_ids:
+            # Fallback: legacy single-tax_rate calculation
+            taxable_subtotal = sum(
+                (i.amount for i in items if i.is_taxable),
+                Decimal("0")
+            )
+            taxable_base = max(taxable_subtotal - discount_amount, Decimal("0"))
+            self.tax_amount = taxable_base * (self.tax_rate / Decimal("100"))
+        else:
+            tax_map = {t.pk: t for t in TaxMaster.objects.filter(pk__in=tax_ids, is_active=True)}
+            tax_total = Decimal("0")
+            for tax_pk, tax in tax_map.items():
+                taxable = sum(
+                    (i.amount for i in items if i.is_taxable and any(t.pk == tax_pk for t in i.taxes.all())),
+                    Decimal("0")
+                )
+                taxable_base = max(taxable - discount_amount, Decimal("0"))
+                tax_total += taxable_base * (tax.rate / Decimal("100"))
+            self.tax_amount = tax_total
+
         self.grand_total = self.subtotal - discount_amount + self.tax_amount
         self.save(update_fields=['subtotal', 'tax_amount', 'grand_total', 'updated_at'])
 
@@ -367,6 +395,34 @@ class ChargeMaster(models.Model):
         return f"{self.name} ({self.default_currency} {self.default_rate})"
 
 
+class TaxMaster(models.Model):
+    """Master data for tax types (PPN, PPnBM, etc.) per tenant."""
+    tenant = models.ForeignKey(
+        'users.Tenant',
+        on_delete=models.CASCADE,
+        related_name='tax_masters'
+    )
+    description = models.CharField(max_length=255)
+    code = models.CharField(max_length=20, help_text="e.g. VAT1, VAT2")
+    display = models.CharField(max_length=50, help_text="e.g. VAT")
+    rate = models.DecimalField(max_digits=5, decimal_places=2, help_text="Percentage (e.g. 1.10 for 1.1%)")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['description']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tenant', 'code'],
+                name='uniq_tax_code_per_tenant'
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.description} ({self.rate}%)"
+
+
 class QuotationItem(models.Model):
     """Line-item biaya di dalam sebuah Quotation."""
 
@@ -398,7 +454,8 @@ class QuotationItem(models.Model):
     unit         = models.CharField(max_length=30, default='Lot', help_text="e.g., KG, CBM, Container, Lot")
     unit_price   = models.DecimalField(max_digits=14, decimal_places=2)
     amount       = models.DecimalField(max_digits=14, decimal_places=2)
-    is_taxable   = models.BooleanField(default=True)
+    is_taxable   = models.BooleanField(default=True, help_text="If True, this item is subject to selected taxes below")
+    taxes        = models.ManyToManyField(TaxMaster, blank=True, help_text="Which tax(es) apply to this item")
     currency     = models.CharField(max_length=5, default='IDR')
     note         = models.CharField(max_length=255, blank=True, null=True)
 

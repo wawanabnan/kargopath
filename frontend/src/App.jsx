@@ -23,6 +23,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import QuotationsListPage from './pages/QuotationsListPage';
 import SettingsPage     from './pages/SettingsPage';
 import ChargeMasterPage from './pages/ChargeMasterPage';
+import TaxMasterPage from './pages/TaxMasterPage';
 
 // Pages that render their own full-page layout (no shared Navbar)
 const STANDALONE = ['/quote', '/login', '/register', '/dashboard', '/profile', '/settings'];
@@ -81,6 +82,7 @@ function Layout() {
         <Route path="/profile/change-password" element={<PrivateRoute><ChangePasswordPage /></PrivateRoute>} />
         <Route path="/settings"              element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
         <Route path="/settings/charge-masters" element={<PrivateRoute><ChargeMasterPage /></PrivateRoute>} />
+        <Route path="/settings/tax-masters" element={<PrivateRoute><TaxMasterPage /></PrivateRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

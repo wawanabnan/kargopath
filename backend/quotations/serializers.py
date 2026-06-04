@@ -1,11 +1,20 @@
 from rest_framework import serializers
+from decimal import Decimal
 from .models import (
     QuotationRequest,
     Quotation,
     QuotationItem,
     QuotationRequestCargoItem,
     ChargeMaster,
+    TaxMaster,
 )
+
+
+class TaxMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaxMaster
+        fields = '__all__'
+        read_only_fields = ('tenant', 'created_at', 'updated_at')
 
 
 class ChargeMasterSerializer(serializers.ModelSerializer):
@@ -272,6 +281,7 @@ class QuotationSerializer(serializers.ModelSerializer):
     )
     request_details   = QuotationRequestSerializer(source='request', read_only=True)
     discount_amount = serializers.SerializerMethodField(read_only=True)
+    tax_breakdown = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Quotation
@@ -285,6 +295,34 @@ class QuotationSerializer(serializers.ModelSerializer):
         if obj.discount_type == 'PERCENT':
             return float((obj.subtotal * obj.discount) / 100)
         return float(obj.discount)
+
+    def get_tax_breakdown(self, obj):
+        """Return per-tax breakdown for the quotation."""
+        items = obj.items.prefetch_related('taxes').all()
+        tax_ids = set()
+        for i in items:
+            for t in i.taxes.all():
+                tax_ids.add(t.pk)
+        taxes = TaxMaster.objects.filter(pk__in=tax_ids, is_active=True)
+        results = []
+        for tax in taxes:
+            taxable = sum(
+                (i.amount for i in items if i.is_taxable and tax in i.taxes.all()),
+                Decimal("0")
+            )
+            if taxable == 0:
+                continue
+            amount = taxable * (tax.rate / Decimal("100"))
+            results.append({
+                'id': tax.id,
+                'description': tax.description,
+                'code': tax.code,
+                'display': tax.display,
+                'rate': float(tax.rate),
+                'taxable_base': float(taxable),
+                'amount': float(amount),
+            })
+        return results
     
     def create(self, validated_data):
         """Auto-set tenant and default financial settings."""
