@@ -249,7 +249,7 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
               <MultiSelect
                     options={taxMasters.filter(t => t.is_active !== false).map(t => ({
                       value: t.id,
-                      label: t.display || t.code,
+                      label: `${t.display || t.code} ${t.rate}%`,
                     }))}
                   value={chargeForm.tax_ids || []}
                   onChange={(ids) => setChargeForm({ ...chargeForm, tax_ids: ids })}

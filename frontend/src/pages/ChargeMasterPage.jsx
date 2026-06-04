@@ -164,7 +164,7 @@ export default function ChargeMasterPage() {
                   <MultiSelect
                     options={taxes.filter(t => t.is_active !== false).map(t => ({
                       value: t.id,
-                      label: t.display || t.code,
+                      label: `${t.display || t.code} ${t.rate}%`,
                     }))}
                     value={form.default_taxes}
                     onChange={(ids) => setForm({ ...form, default_taxes: ids })}
