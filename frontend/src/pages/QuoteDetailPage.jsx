@@ -228,43 +228,35 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Unit</label>
               <select
+
                 value={chargeForm.unit}
                 onChange={e => setChargeForm({ ...chargeForm, unit: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:border-blue-600 bg-white appearance-none"
               >
                 <option value="KG">KG</option>
                 <option value="CBM">CBM</option>
-                <option value="UNIT">UNIT</option>
                 <option value="CONTAINER">CONTAINER</option>
                 <option value="LOT">LOT</option>
                 <option value="DOC">DOC</option>
                 <option value="TRIP">TRIP</option>
+                <option value="UNIT">UNIT</option>
               </select>
             </div>
           </div>
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-            <input
-              type="checkbox"
-              checked={chargeForm.is_taxable}
-              onChange={e => setChargeForm({ ...chargeForm, is_taxable: e.target.checked })}
-              className="rounded border-slate-300"
-            />
-            Taxable (PPN)
-          </label>
           {taxMasters.length > 0 && (
-            <div className="border-t border-slate-100 pt-3">
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Applicable Tax(es)</label>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Select Tax</label>
               <MultiSelect
-                options={taxMasters.filter(t => t.is_active !== false).map(t => ({
-                  value: t.id,
-                  label: `${t.display || t.code}: ${t.description} (${t.rate}%)`,
-                }))}
-                value={chargeForm.tax_ids || []}
-                onChange={(ids) => setChargeForm({ ...chargeForm, tax_ids: ids })}
-                placeholder="Select tax(es)..."
-              />
-            </div>
-          )}
+                  options={taxMasters.filter(t => t.is_active !== false).map(t => ({
+                    value: t.id,
+                    label: `${t.display || t.code}: ${t.description} (${t.rate}%)`,
+                  }))}
+                  value={chargeForm.tax_ids || []}
+                  onChange={(ids) => setChargeForm({ ...chargeForm, tax_ids: ids })}
+                  placeholder="Select tax(es)..."
+                />
+              </div>
+            )}
         </div>
         <div className="px-5 py-4 border-t border-slate-200 flex gap-3">
           <button onClick={onClose}

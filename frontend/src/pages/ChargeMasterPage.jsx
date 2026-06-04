@@ -145,7 +145,7 @@ export default function ChargeMasterPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Default Unit</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Unit</label>
                 <select value={form.default_unit} onChange={e => setForm({...form, default_unit: e.target.value})} className="w-full px-3 py-2 border border-slate-300 text-sm bg-white focus:outline-none focus:border-blue-600">
                   <option value="KG">KG</option>
                   <option value="CBM">CBM</option>
@@ -156,11 +156,10 @@ export default function ChargeMasterPage() {
                   <option value="UNIT">UNIT</option>
                 </select>
               </div>
-              {/* Default Taxes */}
-              <div className="col-span-2 border-t border-slate-100 pt-3">
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Default Tax(es)</label>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Select Tax</label>
                 {taxes.length === 0 ? (
-                  <p className="text-xs text-slate-400">No tax types defined. Create Tax Master first.</p>
+                  <p className="text-xs text-slate-400 pt-2">No tax types defined.</p>
                 ) : (
                   <MultiSelect
                     options={taxes.filter(t => t.is_active !== false).map(t => ({
