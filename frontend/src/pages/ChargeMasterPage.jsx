@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Plus, Loader2, AlertCircle, X, Check } from 'lucide-react';
 import { chargeMasterAPI, taxMasterAPI } from '../api';
 import DashboardLayout from '../components/DashboardLayout';
+import MultiSelect from '../components/MultiSelect';
 
 export default function ChargeMasterPage() {
   const [masters, setMasters] = useState([]);
@@ -72,12 +73,6 @@ export default function ChargeMasterPage() {
     } catch (err) {
       alert(err?.detail || 'Failed to delete.');
     }
-  };
-
-  const toggleDefaultTax = (taxId) => {
-    const current = form.default_taxes;
-    const next = current.includes(taxId) ? current.filter(id => id !== taxId) : [...current, taxId];
-    setForm({ ...form, default_taxes: next });
   };
 
   const categories = [
@@ -163,23 +158,19 @@ export default function ChargeMasterPage() {
               </div>
               {/* Default Taxes */}
               <div className="col-span-2 border-t border-slate-100 pt-3">
-                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Default Tax(es)</p>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Default Tax(es)</label>
                 {taxes.length === 0 ? (
                   <p className="text-xs text-slate-400">No tax types defined. Create Tax Master first.</p>
                 ) : (
-                  <div className="space-y-1.5">
-                    {taxes.filter(t => t.is_active !== false).map(t => (
-                      <label key={t.id} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.default_taxes.includes(t.id)}
-                          onChange={() => toggleDefaultTax(t.id)}
-                          className="rounded border-slate-300"
-                        />
-                        {t.display || t.code}: {t.description} ({t.rate}%)
-                      </label>
-                    ))}
-                  </div>
+                  <MultiSelect
+                    options={taxes.filter(t => t.is_active !== false).map(t => ({
+                      value: t.id,
+                      label: `${t.display || t.code}: ${t.description} (${t.rate}%)`,
+                    }))}
+                    value={form.default_taxes}
+                    onChange={(ids) => setForm({ ...form, default_taxes: ids })}
+                    placeholder="Select tax(es)..."
+                  />
                 )}
               </div>
             </div>

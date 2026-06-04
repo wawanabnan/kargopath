@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { Package, MapPin, Anchor, CheckCircle2, FileText, FileDown, MessageSquare, Loader2, AlertCircle, Clock, UserPlus, ChevronDown, X, User } from 'lucide-react';
 import { quotationAPI, quotationRequestAPI, usersAPI, chargeMasterAPI, taxMasterAPI, getAccessToken } from '../api';
 import DashboardLayout from '../components/DashboardLayout';
+import MultiSelect from '../components/MultiSelect';
 import { useAuth } from '../context/AuthContext';
 
 // ── Assign Sales Modal ──────────────────────────────────────────────────────────
@@ -152,12 +153,6 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
     }
   };
 
-  const toggleTax = (taxId) => {
-    const current = chargeForm.tax_ids || [];
-    const next = current.includes(taxId) ? current.filter(id => id !== taxId) : [...current, taxId];
-    setChargeForm({ ...chargeForm, tax_ids: next });
-  };
-
   const isOthers = chargeForm.charge_master === '__others__';
 
   return (
@@ -258,20 +253,16 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
           </label>
           {taxMasters.length > 0 && (
             <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Applicable Taxes</p>
-              <div className="space-y-1.5">
-                {taxMasters.filter(t => t.is_active !== false).map(t => (
-                  <label key={t.id} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(chargeForm.tax_ids || []).includes(t.id)}
-                      onChange={() => toggleTax(t.id)}
-                      className="rounded border-slate-300"
-                    />
-                    <span>{t.display || t.code}: {t.description} ({t.rate}%)</span>
-                  </label>
-                ))}
-              </div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1.5">Applicable Tax(es)</label>
+              <MultiSelect
+                options={taxMasters.filter(t => t.is_active !== false).map(t => ({
+                  value: t.id,
+                  label: `${t.display || t.code}: ${t.description} (${t.rate}%)`,
+                }))}
+                value={chargeForm.tax_ids || []}
+                onChange={(ids) => setChargeForm({ ...chargeForm, tax_ids: ids })}
+                placeholder="Select tax(es)..."
+              />
             </div>
           )}
         </div>
