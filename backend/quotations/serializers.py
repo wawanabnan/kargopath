@@ -267,7 +267,9 @@ class QuotationItemSerializer(serializers.ModelSerializer):
             attrs.setdefault('unit', charge_master.default_unit)
             attrs.setdefault('unit_price', charge_master.default_rate)
             attrs.setdefault('currency', charge_master.default_currency)
-            attrs.setdefault('is_taxable', charge_master.taxable_default)
+            # If charge master has default_taxes, consider it taxable
+            if not attrs.get('is_taxable', True) and charge_master.default_taxes.exists():
+                attrs['is_taxable'] = True
         return attrs
 
 

@@ -375,6 +375,8 @@ class ChargeMaster(models.Model):
     default_rate = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     default_currency = models.CharField(max_length=5, default='IDR')
     taxable_default = models.BooleanField(default=True)
+    default_taxes = models.ManyToManyField('TaxMaster', blank=True,
+        help_text="Tax(es) that apply by default when this charge is selected")
     is_active = models.BooleanField(default=True)
     is_tax = models.BooleanField(default=False, help_text="If True, this charge is a tax item (PPN/PPh etc.)")
     tax_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,

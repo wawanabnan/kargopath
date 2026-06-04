@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Loader2, AlertCircle, X, Check, ChevronDown } from 'lucide-react';
-import { chargeMasterAPI } from '../api';
+import { Package, Plus, Loader2, AlertCircle, X, Check } from 'lucide-react';
+import { chargeMasterAPI, taxMasterAPI } from '../api';
 import DashboardLayout from '../components/DashboardLayout';
 
 export default function ChargeMasterPage() {
   const [masters, setMasters] = useState([]);
+  const [taxes, setTaxes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true, is_tax: false, tax_percent: '' });
+  const [form, setForm] = useState({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', default_taxes: [] });
 
   const load = async () => {
     setLoading(true);
     try {
-      const data = await chargeMasterAPI.list();
-      setMasters(data?.results ?? data ?? []);
+      const [cmData, txData] = await Promise.all([chargeMasterAPI.list(), taxMasterAPI.list()]);
+      setMasters(cmData?.results ?? cmData ?? []);
+      setTaxes(txData?.results ?? txData ?? []);
     } catch {
-      setError('Failed to load charge masters.');
+      setError('Failed to load data.');
     } finally {
       setLoading(false);
     }
@@ -27,7 +29,7 @@ export default function ChargeMasterPage() {
   useEffect(() => { load(); }, []);
 
   const resetForm = () => {
-    setForm({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', taxable_default: true, is_tax: false, tax_percent: '' });
+    setForm({ name: '', code: '', category: 'freight', default_unit: 'LOT', default_rate: 0, default_currency: 'IDR', default_taxes: [] });
     setEditing(null);
     setShowForm(false);
   };
@@ -36,8 +38,8 @@ export default function ChargeMasterPage() {
     setForm({
       name: m.name, code: m.code || '', category: m.category,
       default_unit: m.default_unit, default_rate: parseFloat(m.default_rate),
-      default_currency: m.default_currency, taxable_default: m.taxable_default,
-      is_tax: m.is_tax, tax_percent: m.tax_percent || '',
+      default_currency: m.default_currency,
+      default_taxes: (m.default_taxes || []).map(t => typeof t === 'object' ? t.id : t),
     });
     setEditing(m.id);
     setShowForm(true);
@@ -72,6 +74,12 @@ export default function ChargeMasterPage() {
     }
   };
 
+  const toggleDefaultTax = (taxId) => {
+    const current = form.default_taxes;
+    const next = current.includes(taxId) ? current.filter(id => id !== taxId) : [...current, taxId];
+    setForm({ ...form, default_taxes: next });
+  };
+
   const categories = [
     { value: 'freight', label: 'Main Freight' },
     { value: 'trucking', label: 'Trucking' },
@@ -80,6 +88,13 @@ export default function ChargeMasterPage() {
     { value: 'insurance', label: 'Insurance' },
     { value: 'other', label: 'Other Charges' },
   ];
+
+  const getTaxNames = (ids) => {
+    return ids.map(id => {
+      const t = taxes.find(tx => tx.id === id);
+      return t ? `${t.display || t.code} (${t.rate}%)` : null;
+    }).filter(Boolean);
+  };
 
   return (
     <DashboardLayout title="Charge Master">
@@ -146,20 +161,27 @@ export default function ChargeMasterPage() {
                   <option value="UNIT">UNIT</option>
                 </select>
               </div>
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 self-end pb-2">
-                <input type="checkbox" checked={form.taxable_default} onChange={e => setForm({...form, taxable_default: e.target.checked})} className="rounded border-slate-300" />
-                Taxable (PPN)
-              </label>
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 self-end pb-2">
-                <input type="checkbox" checked={form.is_tax} onChange={e => setForm({...form, is_tax: e.target.checked, tax_percent: e.target.checked ? form.tax_percent : ''})} className="rounded border-slate-300" />
-                Is Tax Item
-              </label>
-              {form.is_tax && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1">Tax %</label>
-                  <input type="number" min="0" step="0.01" value={form.tax_percent} onChange={e => setForm({...form, tax_percent: e.target.value})} placeholder="e.g. 1.10" className="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:border-blue-600" />
-                </div>
-              )}
+              {/* Default Taxes */}
+              <div className="col-span-2 border-t border-slate-100 pt-3">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Default Tax(es)</p>
+                {taxes.length === 0 ? (
+                  <p className="text-xs text-slate-400">No tax types defined. Create Tax Master first.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {taxes.filter(t => t.is_active !== false).map(t => (
+                      <label key={t.id} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.default_taxes.includes(t.id)}
+                          onChange={() => toggleDefaultTax(t.id)}
+                          className="rounded border-slate-300"
+                        />
+                        {t.display || t.code}: {t.description} ({t.rate}%)
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs transition-colors flex items-center gap-1.5">
@@ -180,26 +202,28 @@ export default function ChargeMasterPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {masters.map(m => (
-              <div key={m.id} className="bg-white border border-slate-200 px-5 py-3 flex items-center justify-between hover:border-slate-300 transition-colors group">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-800">{m.name}</span>
-                    {m.is_tax && <span className="text-[10px] font-bold text-amber-600 uppercase bg-amber-50 border border-amber-200 px-1.5 py-0.5">TAX</span>}
-                    {m.code && <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5">{m.code}</span>}
-                    <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5">{categories.find(c => c.value === m.category)?.label || m.category}</span>
+            {masters.map(m => {
+              const taxNames = getTaxNames(m.default_taxes || []);
+              return (
+                <div key={m.id} className="bg-white border border-slate-200 px-5 py-3 flex items-center justify-between hover:border-slate-300 transition-colors group">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-800">{m.name}</span>
+                      {m.code && <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5">{m.code}</span>}
+                      <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5">{categories.find(c => c.value === m.category)?.label || m.category}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {m.default_currency} {parseFloat(m.default_rate).toLocaleString('id-ID')} / {m.default_unit}
+                      {taxNames.length > 0 && ` · Taxes: ${taxNames.join(', ')}`}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {m.is_tax ? `${m.tax_percent}% Tax Item` : `${m.default_currency} ${parseFloat(m.default_rate).toLocaleString('id-ID')} / ${m.default_unit}`}
-                    {!m.is_tax && (m.taxable_default ? ' · Taxable' : ' · Non-taxable')}
-                  </p>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleEdit(m)} className="px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 border border-blue-200 transition-colors">Edit</button>
+                    <button onClick={() => handleDelete(m.id)} className="px-2.5 py-1 text-xs font-bold text-red-500 hover:bg-red-50 border border-red-200 transition-colors">Delete</button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(m)} className="px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 border border-blue-200 transition-colors">Edit</button>
-                  <button onClick={() => handleDelete(m.id)} className="px-2.5 py-1 text-xs font-bold text-red-500 hover:bg-red-50 border border-red-200 transition-colors">Delete</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

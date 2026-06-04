@@ -146,8 +146,8 @@ function AddChargeModal({ chargeForm, setChargeForm, chargeMasters, setChargeMas
         charge_name: master.name,
         unit_price: fmt(master.default_rate),
         unit: master.default_unit,
-        is_taxable: master.taxable_default,
-        tax_ids: chargeForm.tax_ids || [],
+        is_taxable: true,
+        tax_ids: (master.default_taxes || []).map(t => typeof t === 'object' ? t.id : t),
       });
     }
   };
