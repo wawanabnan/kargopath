@@ -62,7 +62,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
   const NavLinks = ({ mobile = false, onClose }) => (
     <>
       {(!mobile && !collapsed) && (
-        <p className="px-2 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">
+        <p className="px-2 text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">
           {isStaff ? 'Operations' : 'Menu'}
         </p>
       )}
@@ -74,7 +74,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${active ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
+            } ${active ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'}`}>
             <Icon className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && label}
           </Link>
@@ -85,13 +85,13 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
       {isStaff && user?.role === 'ADMIN' && (
         <>
           <div className="my-2 border-t border-neutral-700" />
-          {(!mobile && !collapsed) && <p className="px-2 text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">Admin</p>}
+          {(!mobile && !collapsed) && <p className="px-2 text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">Admin</p>}
           <Link to="/settings"
             title={!mobile && collapsed ? 'Settings' : undefined}
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${location.pathname === '/settings' ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
+            } ${location.pathname === '/settings' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'}`}>
             <Settings className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && 'Settings'}
           </Link>
@@ -100,13 +100,13 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             onClick={onClose}
             className={`flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors mb-0.5 ${
               !mobile && collapsed ? 'justify-center' : ''
-            } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
+            } ${location.pathname === '/settings/charge-masters' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'}`}>
             <DollarSign className="w-4 h-4 flex-shrink-0" />
             {(mobile || !collapsed) && 'Charge Master'}
           </Link>
           <a href="http://127.0.0.1:8000/admin/" target="_blank" rel="noopener noreferrer"
             title={!mobile && collapsed ? 'Django Admin' : undefined}
-            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors mb-0.5 ${!mobile && collapsed ? 'justify-center' : ''}`}>
+            className={`flex items-center gap-3 px-2 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors mb-0.5 ${!mobile && collapsed ? 'justify-center' : ''}`}>
             <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> {(mobile || !collapsed) && 'Django Admin'}
           </a>
         </>
@@ -132,14 +132,14 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
           {!collapsed && (
             <button onClick={() => setCollapsed(true)}
               title="Collapse sidebar"
-              className="ml-auto text-neutral-500 hover:text-white transition-colors">
+              className="ml-auto text-neutral-400 hover:text-white transition-colors">
               <PanelLeftClose className="w-4 h-4" />
             </button>
           )}
           {collapsed && (
             <button onClick={() => setCollapsed(false)}
               title="Expand sidebar"
-              className="text-neutral-500 hover:text-white transition-colors">
+              className="text-neutral-400 hover:text-white transition-colors">
               <PanelLeftOpen className="w-4 h-4" />
             </button>
           )}
@@ -152,7 +152,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
 
         {/* Copyright — always visible at bottom */}
         <div className="flex-shrink-0 px-3 py-3 border-t border-neutral-700">
-          <p className="text-[10px] text-neutral-500 text-center leading-tight">
+          <p className="text-[10px] text-neutral-400 text-center leading-tight">
             {collapsed
               ? '© 2026'
               : '© 2026 KargoPath'
@@ -245,7 +245,7 @@ export default function DashboardLayout({ children, title = 'Client Portal' }) {
             </nav>
             <div className="px-2 py-3 border-t border-neutral-700">
               <button onClick={logout}
-                className="w-full flex items-center gap-3 px-2 py-2.5 text-sm text-neutral-400 hover:bg-neutral-700 hover:text-white">
+                className="w-full flex items-center gap-3 px-2 py-2.5 text-sm text-neutral-300 hover:bg-neutral-700 hover:text-white">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>
