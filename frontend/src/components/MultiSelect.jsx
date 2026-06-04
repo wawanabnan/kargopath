@@ -51,23 +51,6 @@ export default function MultiSelect({ options, value, onChange, placeholder, dis
       {/* ── dropdown ── */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto">
-          {selected.length > 0 && (
-            <div className="px-3 py-2 border-b border-slate-100 flex flex-wrap gap-1">
-              {selected.map(o => (
-                <span key={o.value}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded"
-                >
-                  {o.label}
-                  <button type="button"
-                    onClick={(e) => { e.stopPropagation(); toggle(o.value); }}
-                    className="hover:text-blue-200 focus:outline-none"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
           {unselected.length === 0 ? (
             <div className="px-3 py-2 text-xs text-slate-400">All items selected</div>
           ) : (
