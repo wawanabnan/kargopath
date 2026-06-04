@@ -200,22 +200,24 @@
   <table class="charges-table">
     <thead>
       <tr>
-        <th style="width:40%;">Description</th>
+        <th style="width:35%;">Description</th>
         <th style="width:25%;">Item Type</th>
-        <th style="width:15%;">Qty</th>
+        <th style="width:10%;">Qty</th>
+        <th style="width:10%;">Unit</th>
         <th style="width:20%;">Amount ({{ quotation.currency }})</th>
       </tr>
     </thead>
     <tbody>
       {% for item in items %}
       <tr>
-        <td>{{ item.description }}</td>
-        <td>{{ item.item_type }}</td>
-        <td>{{ item.quantity }}</td>
+        <td>{{ item.charge_name }}</td>
+        <td>{{ item.get_category_display }}</td>
+        <td>{{ item.qty|floatformat:0 }}</td>
+        <td>{{ item.unit }}</td>
         <td>{{ item.amount|floatformat:2 }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:12px;">No charges added yet.</td></tr>
+      <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:12px;">No charges added yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
