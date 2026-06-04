@@ -3,7 +3,7 @@
  * Base URL points to Django backend at localhost:8000
  */
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_URL = `${window.location.origin}/api/v1`;
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 export const getAccessToken  = () => localStorage.getItem('access_token');
