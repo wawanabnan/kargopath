@@ -28,7 +28,7 @@ export default function MultiSelect({ options, value, onChange, placeholder, dis
             <span className="text-slate-400">{placeholder || 'Select...'}</span>
           ) : (
             selected.map(o => (
-              <span key={o.value} className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+              <span key={o.value} className="inline-block px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded">
                 {o.label}
               </span>
             ))

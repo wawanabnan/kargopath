@@ -87,7 +87,7 @@ export default function ChargeMasterPage() {
   const getTaxNames = (ids) => {
     return ids.map(id => {
       const t = taxes.find(tx => tx.id === id);
-      return t ? `${t.display || t.code} (${t.rate}%)` : null;
+      return t ? `${t.display || t.code} ${parseFloat(t.rate).toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:1})}%` : null;
     }).filter(Boolean);
   };
 
@@ -164,7 +164,7 @@ export default function ChargeMasterPage() {
                   <MultiSelect
                     options={taxes.filter(t => t.is_active !== false).map(t => ({
                       value: t.id,
-                      label: `${t.display || t.code} ${t.rate}%`,
+                      label: `${t.display || t.code} ${parseFloat(t.rate).toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:1})}%`,
                     }))}
                     value={form.default_taxes}
                     onChange={(ids) => setForm({ ...form, default_taxes: ids })}
